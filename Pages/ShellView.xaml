@@ -15,12 +15,31 @@
     >
 
     <Grid>
-        <TextBlock
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            FontSize="30"
-            >
-            Hello Stylet!
-        </TextBlock>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0">
+            <TextBlock
+                Margin="5,0,5,0"
+                Text="Encoder Path"
+                />
+            <TextBox
+                Margin="5,0,5,0"
+                Text="{Binding EncodeInfo.EncodePath, UpdateSourceTrigger=PropertyChanged}"
+                />
+            <Separator />
+
+            <TextBlock
+                Margin="5,0,5,0"
+                Text="Encoded Path"
+                />
+            <TextBox
+                Margin="5,0,5,0"
+                Text="{Binding EncodeInfo.FinishPath, UpdateSourceTrigger=PropertyChanged}"
+                />
+            <Separator />
+        </StackPanel>
     </Grid>
 </Window>

@@ -1,9 +1,11 @@
 ﻿
+using Stylet;
+
 namespace FfmpegEnkoder.Models
 {
-    class EncodeInformationModel
+    public class EncodeInformationModel : PropertyChangedBase
     {
-        private string encodePath = "";
+        private string _encodePath = "";
 
         /// <summary>
         /// The location (folder or perhaps single file) of the video(s) that will be encoded
@@ -12,15 +14,17 @@ namespace FfmpegEnkoder.Models
         {
             get
             {
-                return encodePath;
+                return _encodePath;
             }
             set
             {
-                encodePath = value;
+                //_encodePath = value;
+                SetAndNotify(ref _encodePath, value);
+                //this.NotifyOfPropertyChange(nameof(this._encodePath));
             }
         }
 
-        private string finishPath = "";
+        private string _finishPath = "";
 
         /// <summary>
         /// The location (normally folder directory) where the encoded videos will be
@@ -29,11 +33,25 @@ namespace FfmpegEnkoder.Models
         {
             get
             {
-                return finishPath;
+                return _finishPath;
             }
             set
             {
-                finishPath = value;
+                _finishPath = value;
+            }
+        }
+
+        private int _encodeResolution = 720;
+
+        public int EncodeResolution
+        {
+            get
+            {
+                return _encodeResolution;
+            }
+            set
+            {
+                SetAndNotify(ref _encodeResolution, value);
             }
         }
 
