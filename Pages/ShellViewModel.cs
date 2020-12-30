@@ -41,18 +41,13 @@ namespace FfmpegEnkoder.Pages
 
         private void SetupEncoder()
         {
-            if (EncodeInfo.FinishPath == "" || EncodeInfo.FinishPath == EncodeInfo.EncodePath)
-            {
-                EncodeInfo.FinishPath = $@"{Path.GetDirectoryName(EncodeInfo.EncodePath)}\EnkoderOutput";
-            }
+            EncodeInfo.FinishPath = $"{EncodeInfo.EncodePath}\\EnkoderOutput";
         }
 
         public void ExecuteEncoder()
         {
             OpenFileDialog ofd = new OpenFileDialog();
-            //ofd.InitialDirectory = "c:\\";
             ofd.Filter = "All files (*.*)|*.*";
-            ofd.FilterIndex = 2;
             ofd.RestoreDirectory = true;
             ofd.Multiselect = true;
 
@@ -61,13 +56,14 @@ namespace FfmpegEnkoder.Pages
             if (ofd.ShowDialog() == true)
             {
                 filePaths = ofd.FileNames;
+                EncodePathSet(Path.GetDirectoryName(ofd.FileNames[0]));
             }
             else return;
 
             for (int i = 0; i < filePaths.Length; i++)
             {
-                var fullFile = Path.Combine(EncodeInfo.EncodePath, filePaths[i]);
-                var encodeFile = Path.Combine(EncodeInfo.FinishPath, Path.ChangeExtension(filePaths[i], ".mkv"));
+                var fullFile = filePaths[i];
+                var encodeFile = Path.Combine(EncodeInfo.FinishPath, Path.ChangeExtension(Path.GetFileName(filePaths[i]), ".mkv"));
 
                 if (!Directory.Exists(EncodeInfo.FinishPath))
                 {

@@ -10,7 +10,6 @@
     Width="800"
     Height="450"
     d:DataContext="{d:DesignInstance local:ShellViewModel}"
-    Closing=""
     FontSize="16"
     mc:Ignorable="d"
     >
