@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MediaInfo.Wrapper" Version="20.9.2" />
     <PackageReference Include="Stylet" Version="1.3.5.0" />
   </ItemGroup>
 </Project>

@@ -13,7 +13,9 @@ namespace FfmpegEnkoder.Pages
 {
     public class ShellViewModel : Screen
     {
-        public string ffmpegPath = "";
+        private List<Process> _processes = new List<Process>();
+
+        public string ffmpegPath;
 
         public EncodeInformationModel EncodeInfo { get; set; } = new EncodeInformationModel();
 
@@ -21,20 +23,30 @@ namespace FfmpegEnkoder.Pages
         {
             base.OnInitialActivate();
 
+            ffmpegPath = $@"{AppDomain.CurrentDomain.BaseDirectory}\bin";
+
             EncodeInfo.PropertyChanged += EncodeInfo_PropertyChanged;
         }
 
-        private async void EncodeInfo_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        private void EncodeInfo_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             switch (e.PropertyName)
             {
                 case nameof(EncodeInfo.EncodePath):
-                    await ExecuteEncoder();
+                    SetupEncoder();
                     break;
             }
         }
 
-        private async Task ExecuteEncoder()
+        private void SetupEncoder()
+        {
+            if (EncodeInfo.FinishPath == "" || EncodeInfo.FinishPath == EncodeInfo.EncodePath)
+            {
+                EncodeInfo.FinishPath = $@"{EncodeInfo.EncodePath}\EnkoderOutput";
+            }
+        }
+
+        private void ExecuteEncoder()
         {
             var mediaInfo = new MediaInfoWrapper(EncodeInfo.EncodePath);
 
@@ -47,32 +59,33 @@ namespace FfmpegEnkoder.Pages
             var scale = $"{width}x{height}";
             var frames = Math.Ceiling(mediaInfo.BestVideoStream.Duration.TotalSeconds * mediaInfo.Framerate);
 
-            var outputFile = new FileInfo(Path.Combine(EncodeInfo.FinishPath, Path.ChangeExtension(EncodeInfo.EncodePath, ".mkv")));
+            var outputFile = new FileInfo(Path.ChangeExtension(EncodeInfo.EncodePath, ".mkv"));
 
             var videoFilter = $"-vf scale={scale}";
             if (mediaInfo.Height == EncodeInfo.EncodeResolution)
-                videoFilter = String.Empty;
+                videoFilter = string.Empty;
 
-            var audioTrack = FindBestAudioTrack(mediaInfo.AudioStreams.ToArray());
-            var audioMap = $"-map -0:a -map 0:a:{audioTrack}";
-                
-            var startInfo = new ProcessStartInfo(ffmpegPath);
-            startInfo.Arguments =
-                $"-i \"{EncodeInfo.EncodePath}\" -hide_banner -y -threads {1} -map 0 {audioMap} {subtitleMap} -c:s copy -c:a aac -b:a {this._options.Bitrate}k {videoFilter} -c:v libx265 -preset fast -crf {this._options.CRF} -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} {outputFile.FullName.Quote()}";
-            startInfo.UseShellExecute = false;
-            startInfo.CreateNoWindow = true;
-            startInfo.RedirectStandardError = true;
+            //var audioTrack = FindBestAudioTrack(mediaInfo.AudioStreams.ToArray(), false);
+            //var audioMap = $"-map -0:a -map 0:a:{audioTrack}";
 
-            this._logger.Debug("Starting ffmpeg with the following arguments: {arguments}",
-                startInfo.Arguments);
-
-            private List<Process> _processes;
+            var startInfo = new ProcessStartInfo(ffmpegPath)
+            {
+                Arguments =
+                //-preset ultrafast, superfast, faster, fast, medium, slow, slower, veryslow, placebo - faster = more size, faster encoding
+                $"-i \"{EncodeInfo.EncodePath}\" -hide_banner -y -threads 0 -map 0 -c:s copy -c:a aac -b:a {128}k {videoFilter} -c:v libx265 -preset ultrafast -crf 18 -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} \"{outputFile.FullName}\"",
+                //$"-i \"{EncodeInfo.EncodePath}\" -hide_banner -y -threads {0} -map 0 {audioMap} {subtitleMap} -c:s copy -c:a aac -b:a {128}k {videoFilter} -c:v libx265 -preset fast -crf {18} -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} \"{outputFile.FullName}\"";
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardError = true
+            };
 
             var process = Process.Start(startInfo);
-            this._processes.Add(process);
+            _processes.Add(process);
+
+            //_processes.Remove(process);
         }
 
-        public int FindBestAudioTrack(AudioStream[] audioStreams, bool japanesePrority = true)
+        public static int FindBestAudioTrack(AudioStream[] audioStreams, bool japanesePrority = true)
         {
             if (audioStreams.Length == 1)
                 return 0;
@@ -98,6 +111,16 @@ namespace FfmpegEnkoder.Pages
         public void OnFinishPathSet(string newPath)
         {
             EncodeInfo.FinishPath = newPath;
+        }
+
+        protected override void OnClose()
+        {
+            base.OnClose();
+
+            foreach (var process in this._processes.Where(p => !p.HasExited))
+            {
+                process.Kill();
+            }
         }
     }
 }

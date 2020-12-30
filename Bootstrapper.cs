@@ -1,6 +1,7 @@
 ﻿using FfmpegEnkoder.Pages;
 using Stylet;
 using StyletIoC;
+using System.Windows;
 
 namespace FfmpegEnkoder
 {
