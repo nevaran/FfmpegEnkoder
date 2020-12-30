@@ -8,23 +8,52 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace FfmpegEnkoder.Pages
 {
     public class ShellViewModel : Screen
     {
-        private List<Process> _processes = new List<Process>();
+        private readonly List<Process> _processes = new List<Process>();
 
         public string ffmpegPath;
 
         public EncodeInformationModel EncodeInfo { get; set; } = new EncodeInformationModel();
 
+        private double progressPercentage = 0;
+
+        public double ProgressPercentage
+        {
+            get
+            {
+                return progressPercentage;
+            }
+            set
+            {
+                SetAndNotify(ref progressPercentage, value);
+            }
+        }
+
+        private bool isEncoding = false;
+
+        public bool IsEncoding
+        {
+            get
+            {
+                return isEncoding;
+            }
+            set
+            {
+                SetAndNotify(ref isEncoding, value);
+            }
+        }
+
         protected override void OnInitialActivate()
         {
             base.OnInitialActivate();
 
-            ffmpegPath = $@"{AppDomain.CurrentDomain.BaseDirectory}\bin";
+            ffmpegPath = $"{AppDomain.CurrentDomain.BaseDirectory}\\bin\\ffmpeg.exe";
 
             EncodeInfo.PropertyChanged += EncodeInfo_PropertyChanged;
         }
@@ -44,7 +73,13 @@ namespace FfmpegEnkoder.Pages
             EncodeInfo.FinishPath = $"{EncodeInfo.EncodePath}\\EnkoderOutput";
         }
 
-        public void ExecuteEncoder()
+        public void OnExecuteEncoder()
+        {
+            IsEncoding = true;
+            ThreadPool.QueueUserWorkItem(ExecuteEncoder);
+        }
+
+        public void ExecuteEncoder(Object stateInfo)
         {
             OpenFileDialog ofd = new OpenFileDialog();
             ofd.Filter = "All files (*.*)|*.*";
@@ -92,6 +127,7 @@ namespace FfmpegEnkoder.Pages
                 {
                     Arguments =
                     //-preset ultrafast, superfast, faster, fast, medium, slow, slower, veryslow, placebo - faster = more size, faster encoding
+                    //-crf 18 - 0 = identical to input (takes a long time); higher number = lower quality
                     $"-i \"{fullFile}\" -hide_banner -y -threads 0 -map 0 -c:s copy -c:a aac -b:a {128}k {videoFilter} -c:v libx265 -preset ultrafast -crf 18 -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} \"{encodeFile}\"",
                     //$"-i \"{EncodeInfo.EncodePath}\" -hide_banner -y -threads {0} -map 0 {audioMap} {subtitleMap} -c:s copy -c:a aac -b:a {128}k {videoFilter} -c:v libx265 -preset fast -crf {18} -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} \"{outputFile.FullName}\"";
                     UseShellExecute = false,
@@ -99,13 +135,60 @@ namespace FfmpegEnkoder.Pages
                     RedirectStandardError = true
                 };
 
+                var lastPercentage = 0d;
+
+                void ProgressReport(Object sender, DataReceivedEventArgs e)
+                {
+                    if (e?.Data == null)
+                        return;
+
+                    var chunks = e.Data.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var time = chunks.FirstOrDefault(c => c.StartsWith("time="));
+
+                    var speed = 0d;
+
+                    for (var i = 0; i < chunks.Length; i++)
+                    {
+                        var chunk = chunks[i];
+                        if (chunk.StartsWith("speed="))
+                        {
+                            if (chunk.Length == 6)
+                                chunk = chunks[i + 1];
+                            else chunk = chunk.Substring(6);
+
+                            speed = Double.Parse(chunk[..^1]);
+
+                            break;
+                        }
+                    }
+
+                    if (String.IsNullOrWhiteSpace(time))
+                        return;
+
+                    var encodedTime = TimeSpan.Parse(time.Substring(5)).TotalSeconds;
+                    var totalTime = mediaInfo.BestVideoStream.Duration.TotalSeconds;
+
+                    var percentage = encodedTime / totalTime;
+                    if (percentage > lastPercentage)
+                    {
+                        progressPercentage = percentage;
+                        lastPercentage = percentage;
+                    }
+                }
+
                 var process = Process.Start(startInfo);//TODO; put in different thread outside the UI
                 _processes.Add(process);
 
+                process.ErrorDataReceived += ProgressReport;
+                process.BeginErrorReadLine();
+
                 process.WaitForExit();
+                process.ErrorDataReceived -= ProgressReport;
 
                 _processes.Remove(process);
             }
+
+            IsEncoding = false;//all queued encoding is done and we can open the ability for new encoding
         }
 
         /*public static int FindBestAudioTrack(AudioStream[] audioStreams, bool japanesePrority = true)

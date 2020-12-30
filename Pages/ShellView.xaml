@@ -42,7 +42,10 @@
                 Text="{Binding EncodeInfo.FinishPath, UpdateSourceTrigger=PropertyChanged}"
                 />
             <Separator />
-            <Button Command="{s:Action ExecuteEncoder}">Encode</Button>
+            <Button Command="{s:Action OnExecuteEncoder}">Encode</Button>
+        </StackPanel>
+        <StackPanel Grid.Column="1">
+            <TextBlock Text="{Binding ProgressPercentage}" />
         </StackPanel>
     </Grid>
 </Window>
