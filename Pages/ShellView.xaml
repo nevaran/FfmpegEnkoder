@@ -10,6 +10,7 @@
     Width="800"
     Height="450"
     d:DataContext="{d:DesignInstance local:ShellViewModel}"
+    Closing=""
     FontSize="16"
     mc:Ignorable="d"
     >
@@ -27,6 +28,7 @@
                 />
             <TextBox
                 Margin="5,0,5,0"
+                IsReadOnly="True"
                 Text="{Binding EncodeInfo.EncodePath, UpdateSourceTrigger=PropertyChanged}"
                 />
             <Separator />
@@ -37,9 +39,11 @@
                 />
             <TextBox
                 Margin="5,0,5,0"
+                IsReadOnly="True"
                 Text="{Binding EncodeInfo.FinishPath, UpdateSourceTrigger=PropertyChanged}"
                 />
             <Separator />
+            <Button Command="{s:Action ExecuteEncoder}">Encode</Button>
         </StackPanel>
     </Grid>
 </Window>

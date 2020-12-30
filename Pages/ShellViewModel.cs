@@ -1,6 +1,7 @@
 ﻿using FfmpegEnkoder.Models;
 using MediaInfo;
 using MediaInfo.Model;
+using Microsoft.Win32;
 using Stylet;
 using System;
 using System.Collections.Generic;
@@ -42,50 +43,76 @@ namespace FfmpegEnkoder.Pages
         {
             if (EncodeInfo.FinishPath == "" || EncodeInfo.FinishPath == EncodeInfo.EncodePath)
             {
-                EncodeInfo.FinishPath = $@"{EncodeInfo.EncodePath}\EnkoderOutput";
+                EncodeInfo.FinishPath = $@"{Path.GetDirectoryName(EncodeInfo.EncodePath)}\EnkoderOutput";
             }
         }
 
-        private void ExecuteEncoder()
+        public void ExecuteEncoder()
         {
-            var mediaInfo = new MediaInfoWrapper(EncodeInfo.EncodePath);
+            OpenFileDialog ofd = new OpenFileDialog();
+            //ofd.InitialDirectory = "c:\\";
+            ofd.Filter = "All files (*.*)|*.*";
+            ofd.FilterIndex = 2;
+            ofd.RestoreDirectory = true;
+            ofd.Multiselect = true;
 
-            var ratio = (Single)mediaInfo.Width / mediaInfo.Height;
-            var height = Math.Min(mediaInfo.Height, EncodeInfo.EncodeResolution);
-            var width = Math.Ceiling(height * ratio);
-            if (width == 1279)
-                width++;
+            string[] filePaths;
 
-            var scale = $"{width}x{height}";
-            var frames = Math.Ceiling(mediaInfo.BestVideoStream.Duration.TotalSeconds * mediaInfo.Framerate);
-
-            var outputFile = new FileInfo(Path.ChangeExtension(EncodeInfo.EncodePath, ".mkv"));
-
-            var videoFilter = $"-vf scale={scale}";
-            if (mediaInfo.Height == EncodeInfo.EncodeResolution)
-                videoFilter = string.Empty;
-
-            //var audioTrack = FindBestAudioTrack(mediaInfo.AudioStreams.ToArray(), false);
-            //var audioMap = $"-map -0:a -map 0:a:{audioTrack}";
-
-            var startInfo = new ProcessStartInfo(ffmpegPath)
+            if (ofd.ShowDialog() == true)
             {
-                Arguments =
-                //-preset ultrafast, superfast, faster, fast, medium, slow, slower, veryslow, placebo - faster = more size, faster encoding
-                $"-i \"{EncodeInfo.EncodePath}\" -hide_banner -y -threads 0 -map 0 -c:s copy -c:a aac -b:a {128}k {videoFilter} -c:v libx265 -preset ultrafast -crf 18 -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} \"{outputFile.FullName}\"",
-                //$"-i \"{EncodeInfo.EncodePath}\" -hide_banner -y -threads {0} -map 0 {audioMap} {subtitleMap} -c:s copy -c:a aac -b:a {128}k {videoFilter} -c:v libx265 -preset fast -crf {18} -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} \"{outputFile.FullName}\"";
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardError = true
-            };
+                filePaths = ofd.FileNames;
+            }
+            else return;
 
-            var process = Process.Start(startInfo);
-            _processes.Add(process);
+            for (int i = 0; i < filePaths.Length; i++)
+            {
+                var fullFile = Path.Combine(EncodeInfo.EncodePath, filePaths[i]);
+                var encodeFile = Path.Combine(EncodeInfo.FinishPath, Path.ChangeExtension(filePaths[i], ".mkv"));
 
-            //_processes.Remove(process);
+                if (!Directory.Exists(EncodeInfo.FinishPath))
+                {
+                    Directory.CreateDirectory(EncodeInfo.FinishPath);
+                }
+
+                var mediaInfo = new MediaInfoWrapper(fullFile);
+
+                var ratio = (Single)mediaInfo.Width / mediaInfo.Height;
+                var height = Math.Min(mediaInfo.Height, EncodeInfo.EncodeResolution);
+                var width = Math.Ceiling(height * ratio);
+                if (width % 2 == 1)
+                    width++;
+
+                var scale = $"{width}x{height}";
+                var frames = Math.Ceiling(mediaInfo.BestVideoStream.Duration.TotalSeconds * mediaInfo.Framerate);
+
+                var videoFilter = $"-vf scale={scale}";
+                if (mediaInfo.Height == EncodeInfo.EncodeResolution)
+                    videoFilter = string.Empty;
+
+                //var audioTrack = FindBestAudioTrack(mediaInfo.AudioStreams.ToArray(), false);
+                //var audioMap = $"-map -0:a -map 0:a:{audioTrack}";
+
+                var startInfo = new ProcessStartInfo(ffmpegPath)
+                {
+                    Arguments =
+                    //-preset ultrafast, superfast, faster, fast, medium, slow, slower, veryslow, placebo - faster = more size, faster encoding
+                    $"-i \"{fullFile}\" -hide_banner -y -threads 0 -map 0 -c:s copy -c:a aac -b:a {128}k {videoFilter} -c:v libx265 -preset ultrafast -crf 18 -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} \"{encodeFile}\"",
+                    //$"-i \"{EncodeInfo.EncodePath}\" -hide_banner -y -threads {0} -map 0 {audioMap} {subtitleMap} -c:s copy -c:a aac -b:a {128}k {videoFilter} -c:v libx265 -preset fast -crf {18} -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} \"{outputFile.FullName}\"";
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardError = true
+                };
+
+                var process = Process.Start(startInfo);//TODO; put in different thread outside the UI
+                _processes.Add(process);
+
+                process.WaitForExit();
+
+                _processes.Remove(process);
+            }
         }
 
-        public static int FindBestAudioTrack(AudioStream[] audioStreams, bool japanesePrority = true)
+        /*public static int FindBestAudioTrack(AudioStream[] audioStreams, bool japanesePrority = true)
         {
             if (audioStreams.Length == 1)
                 return 0;
@@ -101,14 +128,14 @@ namespace FfmpegEnkoder.Pages
 
             // return the default audio.
             return 0;
-        }
+        }*/
 
-        public void OnEncodePathSet(string newPath)
+        public void EncodePathSet(string newPath)
         {
             EncodeInfo.EncodePath = newPath;
         }
 
-        public void OnFinishPathSet(string newPath)
+        public void FinishPathSet(string newPath)
         {
             EncodeInfo.FinishPath = newPath;
         }
@@ -117,7 +144,7 @@ namespace FfmpegEnkoder.Pages
         {
             base.OnClose();
 
-            foreach (var process in this._processes.Where(p => !p.HasExited))
+            foreach (var process in _processes.Where(p => !p.HasExited))
             {
                 process.Kill();
             }
