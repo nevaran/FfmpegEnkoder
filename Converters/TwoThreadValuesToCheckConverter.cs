@@ -8,11 +8,11 @@ namespace FfmpegEnkoder.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            
-            if ((int)value == 0 || (int)value == (int)parameter)
+            int threadCount = Environment.ProcessorCount;
+            if ((int)value == 0 || (int)value == threadCount)
                 return "All";
 
-            return $"{value}/{parameter}";
+            return $"{value}/{threadCount}";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

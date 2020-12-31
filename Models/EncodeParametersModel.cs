@@ -49,7 +49,7 @@ namespace FfmpegEnkoder.Models
             }
         }
 
-        public int MaxUsableThreads
+        public static int MaxUsableThreads
         {
             get
             {

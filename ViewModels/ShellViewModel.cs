@@ -78,6 +78,12 @@ namespace FfmpegEnkoder.ViewModels
                 var fullFile = filePaths[i];
                 var encodeFile = Path.Combine(EncodeInfo.FinishPath, Path.ChangeExtension(Path.GetFileName(filePaths[i]), ".mkv"));
 
+                if (!File.Exists(fullFile))
+                {
+                    EncodeInfo.EncodingStatus += $"Could not find file: {filePaths[i]}\n";
+                    return;
+                }
+
                 EncodeInfo.EncodingStatus += $"Encoding {fullFile}\n";
 
                 if (!Directory.Exists(EncodeInfo.FinishPath))

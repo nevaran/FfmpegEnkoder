@@ -8,6 +8,7 @@
     xmlns:local="clr-namespace:FfmpegEnkoder.ViewModels"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:s="https://github.com/canton7/Stylet"
+    xmlns:sys="clr-namespace:System;assembly=netstandard"
     Title="Ffmpeg Video Encoder"
     Width="800"
     Height="450"
@@ -88,7 +89,6 @@
             <Button
                 Command="{s:Action OnExecuteEncoder}"
                 Content="Encode"
-                IsEnabled="{Binding EncodeInfo.IsNotEncoding}"
                 />
 
             <TextBlock
@@ -125,11 +125,11 @@
                 />
 
             <TextBlock ToolTip="Amount of logical processors to be used in encoding. Setting this to 0 will use all threads. This setting not always works.">
-                <Run Text="Used Threads: " /><Run Text="{Binding EncodeParams.UsedThreads, Converter={StaticResource TwoThreadValuesToCheckConverter}, ConverterParameter=EncodeParams.MaxUsableThreads}" />
+                <Run Text="Used Threads: " /><Run Text="{Binding EncodeParams.UsedThreads, Converter={StaticResource TwoThreadValuesToCheckConverter}}" />
             </TextBlock>
             <Slider
                 LargeChange="1"
-                Maximum="{Binding EncodeParams.MaxUsableThreads}"
+                Maximum="{Binding Source={x:Static sys:Environment.ProcessorCount}}"
                 Minimum="0"
                 SmallChange="1"
                 Value="{Binding EncodeParams.UsedThreads, UpdateSourceTrigger=PropertyChanged}"
