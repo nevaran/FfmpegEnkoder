@@ -82,11 +82,11 @@ namespace FfmpegEnkoder.ViewModels
 
                 if (!File.Exists(fullFile))
                 {
-                    EncodeInfo.EncodingStatus += $"[{i}/{filePaths.Length}] Could not find file: {filePaths[i]}\n";
+                    EncodeInfo.EncodingStatus += $"[{i + 1}/{filePaths.Length}] Could not find file: {filePaths[i]}\n";
                     return;
                 }
 
-                EncodeInfo.EncodingStatus += $"[{i}/{filePaths.Length}] Encoding {fullFile}\n";
+                EncodeInfo.EncodingStatus += $"[{i + 1}/{filePaths.Length}] Encoding {fullFile}\n";
 
                 if (!Directory.Exists(EncodeInfo.FinishPath))
                 {
