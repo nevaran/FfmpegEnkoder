@@ -89,6 +89,7 @@
             <Button
                 Command="{s:Action OnExecuteEncoder}"
                 Content="Encode"
+                IsEnabled="{Binding EncodeInfo.IsNotEncoding}"
                 />
 
             <TextBlock

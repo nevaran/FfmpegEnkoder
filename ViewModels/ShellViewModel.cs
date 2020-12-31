@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Windows;
 
 namespace FfmpegEnkoder.ViewModels
 {
@@ -71,7 +72,8 @@ namespace FfmpegEnkoder.ViewModels
                 return;
             }
 
-            EncodeInfo.EncodingStatus = string.Empty;
+            //EncodeInfo.EncodingStatus = string.Empty;
+            EncodeInfo.EncodingStatus = $"preset:{EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]}; CRF:{EncodeParams.CrfQuality}; Threads:{EncodeParams.UsedThreads}";
 
             for (int i = 0; i < filePaths.Length; i++)
             {
@@ -129,6 +131,23 @@ namespace FfmpegEnkoder.ViewModels
                     var chunks = e.Data.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                     var time = chunks.FirstOrDefault(c => c.StartsWith("time="));
 
+                    var speed = 0d;
+
+                    for (var i = 0; i < chunks.Length; i++)
+                    {
+                        var chunk = chunks[i];
+                        if (chunk.StartsWith("speed="))
+                        {
+                            if (chunk.Length == 6)
+                                chunk = chunks[i + 1];
+                            else chunk = chunk.Substring(6);
+
+                            speed = Double.Parse(chunk[..^1]);
+
+                            break;
+                        }
+                    }
+
                     if (String.IsNullOrWhiteSpace(time))
                         return;
 
@@ -138,7 +157,7 @@ namespace FfmpegEnkoder.ViewModels
                     var percentage = encodedTime / totalTime;
                     if (percentage > lastPercentage)
                     {
-                        EncodeInfo.ProgressTimeString = $"{encodedTime:F1}/{totalTime:F1}s";
+                        EncodeInfo.ProgressTimeString = $"Encode speed(1 = real time): x{speed}";
 
                         EncodeInfo.ProgressPercentage = percentage;
                         lastPercentage = percentage;
@@ -186,7 +205,6 @@ namespace FfmpegEnkoder.ViewModels
         {
             if (Directory.Exists(EncodeInfo.EncodePath))
             {
-                //Clean up file path so it can be navigated OK
                 Process.Start("explorer.exe", string.Format("/open,\"{0}\"", Path.GetFullPath(EncodeInfo.EncodePath)));
             }
         }
@@ -195,7 +213,6 @@ namespace FfmpegEnkoder.ViewModels
         {
             if (Directory.Exists(EncodeInfo.FinishPath))
             {
-                //Clean up file path so it can be navigated OK
                 Process.Start("explorer.exe", string.Format("/open,\"{0}\"", Path.GetFullPath(EncodeInfo.FinishPath)));
                 //Process.Start("explorer.exe", string.Format("/select,\"{0}\"", Path.GetFullPath(EncodeInfo.FinishPath)));
             }
@@ -213,12 +230,21 @@ namespace FfmpegEnkoder.ViewModels
 
         protected override void OnClose()
         {
-            base.OnClose();
+            /*MessageBoxResult result = MessageBox.Show("There is an encoding still running! Quit anyway?", "Encoding In Progress", MessageBoxButton.YesNo);
+            switch (result)
+            {
+                case MessageBoxResult.Yes:
+                    break;
+                case MessageBoxResult.No:
+                    return;
+            }*/
 
             foreach (var process in _processes.Where(p => !p.HasExited))
             {
                 process.Kill();
             }
+
+            base.OnClose();
         }
     }
 }
