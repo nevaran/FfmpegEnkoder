@@ -147,10 +147,12 @@
         <StackPanel Grid.Column="2">
             <TextBlock Text="{Binding EncodeInfo.ProgressPercentageFormatted}" />
             <Separator />
-            <TextBlock
-                Text="{Binding EncodeInfo.EncodingStatus}"
-                TextWrapping="Wrap"
-                />
+            <ScrollViewer>
+                <TextBlock
+                    Text="{Binding EncodeInfo.EncodingStatus}"
+                    TextWrapping="Wrap"
+                    />
+            </ScrollViewer>
         </StackPanel>
     </Grid>
 </Window>

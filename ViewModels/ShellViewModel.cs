@@ -73,7 +73,7 @@ namespace FfmpegEnkoder.ViewModels
             }
 
             //EncodeInfo.EncodingStatus = string.Empty;
-            EncodeInfo.EncodingStatus = $"preset:{EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]}; CRF:{EncodeParams.CrfQuality}; Threads:{EncodeParams.UsedThreads}";
+            EncodeInfo.EncodingStatus = $"preset:{EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]}; CRF:{EncodeParams.CrfQuality}; Threads:{EncodeParams.UsedThreads}\n\n";
 
             for (int i = 0; i < filePaths.Length; i++)
             {
@@ -82,11 +82,11 @@ namespace FfmpegEnkoder.ViewModels
 
                 if (!File.Exists(fullFile))
                 {
-                    EncodeInfo.EncodingStatus += $"Could not find file: {filePaths[i]}\n";
+                    EncodeInfo.EncodingStatus += $"[{i}/{filePaths.Length}] Could not find file: {filePaths[i]}\n";
                     return;
                 }
 
-                EncodeInfo.EncodingStatus += $"Encoding {fullFile}\n";
+                EncodeInfo.EncodingStatus += $"[{i}/{filePaths.Length}] Encoding {fullFile}\n";
 
                 if (!Directory.Exists(EncodeInfo.FinishPath))
                 {
@@ -140,7 +140,7 @@ namespace FfmpegEnkoder.ViewModels
                         {
                             if (chunk.Length == 6)
                                 chunk = chunks[i + 1];
-                            else chunk = chunk.Substring(6);
+                            else chunk = chunk[6..];
 
                             speed = Double.Parse(chunk[..^1]);
 
