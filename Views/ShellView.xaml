@@ -144,15 +144,22 @@
             <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
         </StackPanel>
 
-        <StackPanel Grid.Column="2">
-            <TextBlock Text="{Binding EncodeInfo.ProgressPercentageFormatted}" />
-            <Separator />
-            <ScrollViewer>
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <TextBlock
+                Grid.Row="0"
+                Text="{Binding EncodeInfo.ProgressPercentageFormatted}"
+                />
+            <ScrollViewer Grid.Row="1">
                 <TextBlock
                     Text="{Binding EncodeInfo.EncodingStatus}"
                     TextWrapping="Wrap"
                     />
             </ScrollViewer>
-        </StackPanel>
+        </Grid>
     </Grid>
 </Window>
