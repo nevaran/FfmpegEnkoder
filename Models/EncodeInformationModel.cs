@@ -5,6 +5,77 @@ namespace FfmpegEnkoder.Models
 {
     public class EncodeInformationModel : PropertyChangedBase
     {
+        private bool _isNotEncoding = true;
+
+        /// <summary>
+        /// If the encoder is running or not. Used to lock from another run to be initialized
+        /// </summary>
+        public bool IsNotEncoding
+        {
+            get
+            {
+                return _isNotEncoding;
+            }
+            set
+            {
+                SetAndNotify(ref _isNotEncoding, value);
+            }
+        }
+
+        private string _encodingStatus = "";
+
+        public string EncodingStatus
+        {
+            get
+            {
+                return _encodingStatus;
+            }
+            set
+            {
+                SetAndNotify(ref _encodingStatus, value);
+            }
+        }
+
+        private double _progressPercentage = 0;
+
+        public double ProgressPercentage
+        {
+            get
+            {
+                return _progressPercentage;
+            }
+            set
+            {
+                SetAndNotify(ref _progressPercentage, value);
+                this.NotifyOfPropertyChange(nameof(this.ProgressPercentageFormatted));
+            }
+        }
+
+        public string ProgressPercentageFormatted
+        {
+            get
+            {
+                return $"Encoding: {(int)(ProgressPercentage * 100)}% - {ProgressTimeString }";
+            }
+        }
+
+        private string _progressTimeString = "";
+
+        /// <summary>
+        /// How many seconds of the video have been encoded
+        /// </summary>
+        public string ProgressTimeString
+        {
+            get
+            {
+                return _progressTimeString;
+            }
+            set
+            {
+                SetAndNotify(ref _progressTimeString, value);
+            }
+        }
+
         private string _encodePath = "";
 
         /// <summary>
@@ -37,23 +108,8 @@ namespace FfmpegEnkoder.Models
             }
             set
             {
-                _finishPath = value;
+                SetAndNotify(ref _finishPath, value);
             }
         }
-
-        private int _encodeResolution = 720;
-
-        public int EncodeResolution
-        {
-            get
-            {
-                return _encodeResolution;
-            }
-            set
-            {
-                SetAndNotify(ref _encodeResolution, value);
-            }
-        }
-
     }
 }
