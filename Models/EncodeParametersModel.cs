@@ -46,7 +46,6 @@ namespace FfmpegEnkoder.Models
             set
             {
                 SetAndNotify(ref _usedThreads, value);
-                this.NotifyOfPropertyChange(nameof(this.UsedThreadsTextBlock));
             }
         }
 
@@ -55,17 +54,6 @@ namespace FfmpegEnkoder.Models
             get
             {
                 return Environment.ProcessorCount;
-            }
-        }
-
-        public string UsedThreadsTextBlock
-        {
-            get
-            {
-                if (UsedThreads == 0 || UsedThreads == MaxUsableThreads)
-                    return "Used Threads: All";
-
-                return $"Used Threads: {UsedThreads} of {MaxUsableThreads}";
             }
         }
     }

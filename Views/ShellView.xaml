@@ -2,6 +2,7 @@
     x:Class="FfmpegEnkoder.Views.ShellView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converter="clr-namespace:FfmpegEnkoder.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
     xmlns:local="clr-namespace:FfmpegEnkoder.ViewModels"
@@ -14,6 +15,10 @@
     FontSize="16"
     mc:Ignorable="d"
     >
+
+    <Window.Resources>
+        <converter:TwoThreadValuesToCheckConverter x:Key="TwoThreadValuesToCheckConverter" />
+    </Window.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
@@ -119,10 +124,9 @@
                 Value="{Binding EncodeParams.CrfQuality, UpdateSourceTrigger=PropertyChanged}"
                 />
 
-            <TextBlock
-                Text="{Binding EncodeParams.UsedThreadsTextBlock}"
-                ToolTip="Amount of logical processors to be used in encoding. Setting this to 0 will use all threads. This setting not always works."
-                />
+            <TextBlock ToolTip="Amount of logical processors to be used in encoding. Setting this to 0 will use all threads. This setting not always works.">
+                <Run Text="Used Threads: " /><Run Text="{Binding EncodeParams.UsedThreads, Converter={StaticResource TwoThreadValuesToCheckConverter}, ConverterParameter=EncodeParams.MaxUsableThreads}" />
+            </TextBlock>
             <Slider
                 LargeChange="1"
                 Maximum="{Binding EncodeParams.MaxUsableThreads}"
