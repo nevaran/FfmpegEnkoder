@@ -5,6 +5,20 @@ namespace FfmpegEnkoder.Models
 {
     public class EncodeInformationModel : PropertyChangedBase
     {
+        private string _ffmpegPath = "";
+
+        public string FfmpegPath
+        {
+            get
+            {
+                return _ffmpegPath;
+            }
+            set
+            {
+                SetAndNotify(ref _ffmpegPath, value);
+            }
+        }
+
         private bool _isNotEncoding = true;
 
         /// <summary>

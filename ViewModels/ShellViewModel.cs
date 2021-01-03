@@ -8,7 +8,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Windows;
 
 namespace FfmpegEnkoder.ViewModels
 {
@@ -16,7 +15,21 @@ namespace FfmpegEnkoder.ViewModels
     {
         private readonly List<Process> _processes = new List<Process>();
 
-        public string ffmpegPath;
+        private float _videoDurationSeconds = 0;
+
+        public float VideoDurationSeconds
+        {
+            get
+            {
+                return _videoDurationSeconds;
+            }
+            set
+            {
+                SetAndNotify(ref _videoDurationSeconds, value);
+            }
+        }
+
+        string[] filePaths;
 
         public EncodeInformationModel EncodeInfo { get; set; } = new EncodeInformationModel();
         public EncodeParametersModel EncodeParams { get; set; } = new EncodeParametersModel();
@@ -25,7 +38,7 @@ namespace FfmpegEnkoder.ViewModels
         {
             base.OnInitialActivate();
 
-            ffmpegPath = $"{AppDomain.CurrentDomain.BaseDirectory}\\bin\\ffmpeg.exe";
+            EncodeInfo.FfmpegPath = $"{AppDomain.CurrentDomain.BaseDirectory}\\bin\\ffmpeg.exe";
 
             EncodeInfo.PropertyChanged += EncodeInfo_PropertyChanged;
         }
@@ -45,13 +58,7 @@ namespace FfmpegEnkoder.ViewModels
             FinishPathSet($"{EncodeInfo.EncodePath}\\EnkoderOutput");
         }
 
-        public void OnExecuteEncoder()
-        {
-            EncodeInfo.IsNotEncoding = false;
-            ThreadPool.QueueUserWorkItem(ExecuteEncoder);
-        }
-
-        public void ExecuteEncoder(Object stateInfo)
+        public void OnOpenFiles()
         {
             OpenFileDialog ofd = new OpenFileDialog
             {
@@ -59,26 +66,50 @@ namespace FfmpegEnkoder.ViewModels
                 Multiselect = true
             };
 
-            string[] filePaths;
-
             if (ofd.ShowDialog() == true)
             {
                 filePaths = ofd.FileNames;
                 EncodePathSet(Path.GetDirectoryName(ofd.FileNames[0]));
+
+                var mediaInfo = new MediaInfoWrapper(filePaths[0]);
+
+                //get video duration in seconds (with floating points)
+                VideoDurationSeconds = (float)mediaInfo.Duration / 1000;//mediaInfo.Duration 1s == 1000ms
+
+                EncodeInfo.EncodingStatus = "Files Opened:\n";
+                for (int i = 0; i < filePaths.Length; i++)
+                {
+                    EncodeInfo.EncodingStatus += $"[{i + 1}/{filePaths.Length}] {filePaths[i]}\n";
+                }
             }
             else
             {
-                EncodeInfo.IsNotEncoding = true;
+                //EncodeInfo.IsNotEncoding = true;
+                return;
+            }
+        }
+
+        public void OnExecuteEncoder()
+        {
+            if (filePaths == null || filePaths.Length < 1)
+            {
+                EncodeInfo.EncodingStatus = "No files selected!";
                 return;
             }
 
+            EncodeInfo.IsNotEncoding = false;
+            ThreadPool.QueueUserWorkItem(ExecuteEncoder);
+        }
+
+        public void ExecuteEncoder(Object stateInfo)
+        {
             //EncodeInfo.EncodingStatus = string.Empty;
             EncodeInfo.EncodingStatus = $"preset:{EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]}; CRF:{EncodeParams.CrfQuality}; Threads:{EncodeParams.UsedThreads}\n\n";
 
             for (int i = 0; i < filePaths.Length; i++)
             {
                 var fullFile = filePaths[i];
-                var encodeFile = Path.Combine(EncodeInfo.FinishPath, Path.ChangeExtension(Path.GetFileName(filePaths[i]), ".mkv"));
+                var encodeFile = Path.Combine(EncodeInfo.FinishPath, Path.ChangeExtension(Path.GetFileName(filePaths[i]), ".mp4"));
 
                 if (!File.Exists(fullFile))
                 {
@@ -109,7 +140,7 @@ namespace FfmpegEnkoder.ViewModels
                 //var audioTrack = FindBestAudioTrack(mediaInfo.AudioStreams.ToArray(), false);
                 //var audioMap = $"-map -0:a -map 0:a:{audioTrack}";
 
-                var startInfo = new ProcessStartInfo(ffmpegPath)
+                var startInfo = new ProcessStartInfo(EncodeInfo.FfmpegPath)
                 {
                     Arguments =
                     //-preset ultrafast, superfast, faster, fast, medium, slow, slower, veryslow, placebo - faster = more size, faster encoding

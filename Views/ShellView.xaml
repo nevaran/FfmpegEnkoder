@@ -87,8 +87,8 @@
             <Separator />
 
             <Button
-                Command="{s:Action OnExecuteEncoder}"
-                Content="Encode"
+                Command="{s:Action OnOpenFiles}"
+                Content="Open"
                 IsEnabled="{Binding EncodeInfo.IsNotEncoding}"
                 />
 
@@ -128,7 +128,14 @@
                 />
 
             <TextBlock ToolTip="Amount of logical processors to be used in encoding. Setting this to 0 will use all threads. This setting not always works.">
-                <Run Text="Used Threads: " /><Run Text="{Binding EncodeParams.UsedThreads, Converter={StaticResource TwoThreadValuesToCheckConverter}}" />
+                <TextBlock.Text>
+                    <MultiBinding StringFormat="{}Used Threads: {0}">
+                        <Binding
+                            Converter="{StaticResource TwoThreadValuesToCheckConverter}"
+                            Path="EncodeParams.UsedThreads"
+                            />
+                    </MultiBinding>
+                </TextBlock.Text>
             </TextBlock>
             <Slider
                 IsEnabled="{Binding EncodeInfo.IsNotEncoding}"
@@ -137,6 +144,29 @@
                 Minimum="0"
                 SmallChange="1"
                 Value="{Binding EncodeParams.UsedThreads, UpdateSourceTrigger=PropertyChanged}"
+                />
+
+            <TextBlock ToolTip="Trims the video from the start to the set amount (in seconds). USE ONLY WHEN ENCODING A SINGLE VIDEO!">
+                <TextBlock.Text>
+                    <MultiBinding StringFormat="{}Trim Start (seconds): {0:F1}/{1:F1}">
+                        <Binding Path="EncodeParams.TrimStartSeconds" />
+                        <Binding Path="VideoDurationSeconds" />
+                    </MultiBinding>
+                </TextBlock.Text>
+            </TextBlock>
+            <Slider
+                IsEnabled="{Binding EncodeInfo.IsNotEncoding}"
+                LargeChange="1"
+                Maximum="{Binding VideoDurationSeconds}"
+                Minimum="0"
+                TickFrequency="0.1"
+                Value="{Binding EncodeParams.TrimStartSeconds, UpdateSourceTrigger=PropertyChanged}"
+                />
+
+            <Button
+                Command="{s:Action OnExecuteEncoder}"
+                Content="Encode"
+                IsEnabled="{Binding EncodeInfo.IsNotEncoding}"
                 />
         </StackPanel>
 
@@ -159,7 +189,7 @@
                 />
             <ScrollViewer Grid.Row="1">
                 <TextBlock
-                    Text="{Binding EncodeInfo.EncodingStatus}"
+                    Text="{Binding EncodeInfo.EncodingStatus, IsAsync=True}"
                     TextWrapping="Wrap"
                     />
             </ScrollViewer>

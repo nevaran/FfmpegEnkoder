@@ -49,17 +49,17 @@ namespace FfmpegEnkoder.Models
             }
         }
 
-        private int _trimStartSeconds = 0;
+        private float _trimStartSeconds = 0;
 
-        public int TrimStartSeconds
+        public float TrimStartSeconds
         {
             get
             {
-                return _trimStartSeconds;
+                return MathF.Round(_trimStartSeconds, 1);
             }
             set
             {
-                _trimStartSeconds = value;
+                SetAndNotify(ref _trimStartSeconds, value);
             }
         }
     }
