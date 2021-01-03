@@ -114,7 +114,7 @@ namespace FfmpegEnkoder.ViewModels
                     Arguments =
                     //-preset ultrafast, superfast, faster, fast, medium, slow, slower, veryslow, placebo - faster = more size, faster encoding
                     //-crf 18 - 0 = identical to input (takes a long time); higher number = lower quality
-                    $"-i \"{fullFile}\" -hide_banner -y -threads {EncodeParams.UsedThreads} -map 0 -c:s copy -c:a aac -b:a {128}k -c:v libx265 -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} \"{encodeFile}\"",
+                    $"-i \"{fullFile}\" -ss {EncodeParams.TrimStartSeconds} -hide_banner -y -threads {EncodeParams.UsedThreads} -map 0 -c:s copy -c:a aac -b:a {128}k -c:v libx265 -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} \"{encodeFile}\"",
                     //$"-i \"{EncodeInfo.EncodePath}\" -hide_banner -y -threads {0} -map 0 {audioMap} {subtitleMap} -c:s copy -c:a aac -b:a {128}k {videoFilter} -c:v libx265 -preset fast -crf {18} -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} \"{outputFile.FullName}\"";
                     UseShellExecute = false,
                     CreateNoWindow = true,
@@ -157,7 +157,7 @@ namespace FfmpegEnkoder.ViewModels
                     var percentage = encodedTime / totalTime;
                     if (percentage > lastPercentage)
                     {
-                        EncodeInfo.ProgressTimeString = $"Encode speed(1 = real time): x{speed}";
+                        EncodeInfo.EncodeSpeedString = speed;
 
                         EncodeInfo.ProgressPercentage = percentage;
                         lastPercentage = percentage;

@@ -97,6 +97,7 @@
                 ToolTip="A slower preset will provide better compression (compression is quality per filesize)."
                 />
             <ComboBox
+                IsEnabled="{Binding EncodeInfo.IsNotEncoding}"
                 ItemsSource="{Binding EncodeParams.EncodePreset}"
                 SelectedIndex="{Binding EncodeParams.EncodePresetIndex}"
                 />
@@ -118,6 +119,7 @@
                     </Run.Style></Run>
             </TextBlock>
             <Slider
+                IsEnabled="{Binding EncodeInfo.IsNotEncoding}"
                 LargeChange="6"
                 Maximum="51"
                 Minimum="1"
@@ -129,6 +131,7 @@
                 <Run Text="Used Threads: " /><Run Text="{Binding EncodeParams.UsedThreads, Converter={StaticResource TwoThreadValuesToCheckConverter}}" />
             </TextBlock>
             <Slider
+                IsEnabled="{Binding EncodeInfo.IsNotEncoding}"
                 LargeChange="1"
                 Maximum="{Binding Source={x:Static sys:Environment.ProcessorCount}}"
                 Minimum="0"

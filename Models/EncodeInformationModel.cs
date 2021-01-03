@@ -24,6 +24,9 @@ namespace FfmpegEnkoder.Models
 
         private string _encodingStatus = "";
 
+        /// <summary>
+        /// Logging total progress and events
+        /// </summary>
         public string EncodingStatus
         {
             get
@@ -36,7 +39,7 @@ namespace FfmpegEnkoder.Models
             }
         }
 
-        private double _progressPercentage = 0;
+        private double _progressPercentage = 0d;
 
         public double ProgressPercentage
         {
@@ -55,24 +58,25 @@ namespace FfmpegEnkoder.Models
         {
             get
             {
-                return $"Encoding: {(int)(ProgressPercentage * 100)}% - {ProgressTimeString }";
+                return $"Encoding: {(int)(ProgressPercentage * 100)}% - Speed: x{EncodeSpeedString}";
             }
         }
 
-        private string _progressTimeString = "";
+        private double _encodeSpeedString = 0d;
 
         /// <summary>
-        /// How many seconds of the video have been encoded
+        /// How many times the video is encoded over real time
         /// </summary>
-        public string ProgressTimeString
+        public double EncodeSpeedString
         {
             get
             {
-                return _progressTimeString;
+                return _encodeSpeedString;
             }
             set
             {
-                SetAndNotify(ref _progressTimeString, value);
+                SetAndNotify(ref _encodeSpeedString, value);
+                this.NotifyOfPropertyChange(nameof(this.ProgressPercentageFormatted));
             }
         }
 

@@ -49,11 +49,17 @@ namespace FfmpegEnkoder.Models
             }
         }
 
-        public static int MaxUsableThreads
+        private int _trimStartSeconds = 0;
+
+        public int TrimStartSeconds
         {
             get
             {
-                return Environment.ProcessorCount;
+                return _trimStartSeconds;
+            }
+            set
+            {
+                _trimStartSeconds = value;
             }
         }
     }
