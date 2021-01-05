@@ -5,6 +5,8 @@ using Stylet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -128,14 +130,14 @@ namespace FfmpegEnkoder.ViewModels
 
                 //var ratio = (Single)mediaInfo.Width / mediaInfo.Height;
                 //var height = Math.Min(mediaInfo.Height, EncodeInfo.EncodeResolution);
-                var height = mediaInfo.Height;
-                var width = mediaInfo.Width;
+                //var height = mediaInfo.Height;
+                //var width = mediaInfo.Width;
                 //var width = Math.Ceiling(height * ratio);
-                if (width % 2 == 1)
-                    width++;
+                //if (width % 2 == 1)
+                    //width++;
 
-                var scale = $"{width}x{height}";
-                var frames = Math.Ceiling(mediaInfo.BestVideoStream.Duration.TotalSeconds * mediaInfo.Framerate);
+                //var scale = $"{width}x{height}";
+                //var frames = Math.Ceiling(mediaInfo.BestVideoStream.Duration.TotalSeconds * mediaInfo.Framerate);
 
                 //var audioTrack = FindBestAudioTrack(mediaInfo.AudioStreams.ToArray(), false);
                 //var audioMap = $"-map -0:a -map 0:a:{audioTrack}";
@@ -145,7 +147,7 @@ namespace FfmpegEnkoder.ViewModels
                     Arguments =
                     //-preset ultrafast, superfast, faster, fast, medium, slow, slower, veryslow, placebo - faster = more size, faster encoding
                     //-crf 18 - 0 = identical to input (takes a long time); higher number = lower quality
-                    $"-i \"{fullFile}\" -ss {EncodeParams.TrimStartSeconds} -hide_banner -y -threads {EncodeParams.UsedThreads} -map 0 -c:s copy -c:a aac -b:a {128}k -c:v libx{EncodeParams.Encoder[EncodeParams.EncoderIndex]} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} \"{encodeFile}\"",
+                    $"-i \"{fullFile}\" -ss {EncodeParams.TrimStartSeconds} -hide_banner -y -threads {EncodeParams.UsedThreads} -map 0 -c:s copy -c:a aac -b:a {128}k -c:v libx{EncodeParams.Encoder[EncodeParams.EncoderIndex]} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p \"{encodeFile}\"",
                     //$"-i \"{EncodeInfo.EncodePath}\" -hide_banner -y -threads {0} -map 0 {audioMap} {subtitleMap} -c:s copy -c:a aac -b:a {128}k {videoFilter} -c:v libx265 -preset fast -crf {18} -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} \"{outputFile.FullName}\"";
                     UseShellExecute = false,
                     CreateNoWindow = true,
@@ -182,8 +184,8 @@ namespace FfmpegEnkoder.ViewModels
                     if (String.IsNullOrWhiteSpace(time))
                         return;
 
-                    var encodedTime = TimeSpan.Parse(time[5..]).TotalSeconds;
-                    var totalTime = mediaInfo.BestVideoStream.Duration.TotalSeconds;
+                    double encodedTime = TimeSpan.Parse(time[5..]).TotalSeconds;
+                    double totalTime = mediaInfo.BestVideoStream.Duration.TotalSeconds;
 
                     var percentage = encodedTime / totalTime;
                     if (percentage > lastPercentage)
@@ -198,11 +200,15 @@ namespace FfmpegEnkoder.ViewModels
                 var process = Process.Start(startInfo);
                 _processes.Add(process);
 
-                process.ErrorDataReceived += ProgressReport;
-                process.BeginErrorReadLine();
-
+                if (mediaInfo.BestVideoStream is not null)
+                {
+                    process.ErrorDataReceived += ProgressReport;
+                    process.BeginErrorReadLine();
+                }
+                
                 process.WaitForExit();
-                process.ErrorDataReceived -= ProgressReport;
+                if (mediaInfo.BestVideoStream is not null)
+                    process.ErrorDataReceived -= ProgressReport;
 
                 _processes.Remove(process);
 
@@ -276,6 +282,31 @@ namespace FfmpegEnkoder.ViewModels
             }
 
             base.OnClose();
+        }
+    }
+
+    public static class GifExtension
+    {
+        public static TimeSpan? GetGifDuration(this Image image, int fps = 60)
+        {
+            var minimumFrameDelay = (1000.0 / fps);
+            if (!image.RawFormat.Equals(ImageFormat.Gif)) return null;
+            if (!ImageAnimator.CanAnimate(image)) return null;
+
+            var frameDimension = new FrameDimension(image.FrameDimensionsList[0]);
+
+            var frameCount = image.GetFrameCount(frameDimension);
+            var totalDuration = 0;
+
+            for (var f = 0; f < frameCount; f++)
+            {
+                var delayPropertyBytes = image.GetPropertyItem(20736).Value;
+                var frameDelay = BitConverter.ToInt32(delayPropertyBytes, f * 4) * 10;
+                // Minimum delay is 16 ms. It's 1/60 sec i.e. 60 fps
+                totalDuration += (frameDelay < minimumFrameDelay ? (int)minimumFrameDelay : frameDelay);
+            }
+
+            return TimeSpan.FromMilliseconds(totalDuration);
         }
     }
 }
