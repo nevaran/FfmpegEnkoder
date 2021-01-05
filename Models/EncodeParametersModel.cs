@@ -13,11 +13,11 @@ namespace FfmpegEnkoder.Models
         {
             get
             {
-                return _encodeIndex;
+                return _formatIndex;
             }
             set
             {
-                _encodeIndex = value;
+                SetAndNotify(ref _formatIndex, value);
             }
         }
 
@@ -33,7 +33,7 @@ namespace FfmpegEnkoder.Models
             }
             set
             {
-                _encodeIndex = value;
+                SetAndNotify(ref _encodeIndex, value);
             }
         }
 

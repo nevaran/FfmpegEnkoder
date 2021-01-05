@@ -11,7 +11,7 @@
     xmlns:sys="clr-namespace:System;assembly=netstandard"
     Title="Ffmpeg Video Encoder"
     Width="800"
-    Height="450"
+    Height="480"
     d:DataContext="{d:DesignInstance local:ShellViewModel}"
     FontSize="16"
     mc:Ignorable="d"
