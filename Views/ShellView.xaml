@@ -93,6 +93,26 @@
                 />
 
             <TextBlock
+                Text="Format"
+                ToolTip="Choose file format."
+                />
+            <ComboBox
+                IsEnabled="{Binding EncodeInfo.IsNotEncoding}"
+                ItemsSource="{Binding EncodeParams.Format}"
+                SelectedIndex="{Binding EncodeParams.FormatIndex}"
+                />
+
+            <TextBlock
+                Text="Encoder"
+                ToolTip="Choose between H.265 and H.264 encoder. 264 is larger but is more software-friendly."
+                />
+            <ComboBox
+                IsEnabled="{Binding EncodeInfo.IsNotEncoding}"
+                ItemsSource="{Binding EncodeParams.Encoder}"
+                SelectedIndex="{Binding EncodeParams.EncoderIndex}"
+                />
+
+            <TextBlock
                 Text="Encode Preset"
                 ToolTip="A slower preset will provide better compression (compression is quality per filesize)."
                 />

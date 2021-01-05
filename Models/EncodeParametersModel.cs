@@ -5,6 +5,38 @@ namespace FfmpegEnkoder.Models
 {
     public class EncodeParametersModel : PropertyChangedBase
     {
+        public string[] Format { get; } = new string[] { "mp4", "mkv" };
+
+        private int _formatIndex = 0;
+
+        public int FormatIndex
+        {
+            get
+            {
+                return _encodeIndex;
+            }
+            set
+            {
+                _encodeIndex = value;
+            }
+        }
+
+        public string[] Encoder { get; } = new string[] { "265", "264" };
+
+        private int _encodeIndex = 0;
+
+        public int EncoderIndex
+        {
+            get
+            {
+                return _encodeIndex;
+            }
+            set
+            {
+                _encodeIndex = value;
+            }
+        }
+
         public string[] EncodePreset { get; } = new string[] { "ultrafast", "superfast", "faster", "fast", "medium", "slow", "slower", "veryslow", "placebo" };
 
         private int _encodePresetIndex = 4;
