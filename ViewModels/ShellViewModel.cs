@@ -10,6 +10,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Windows;
 
 namespace FfmpegEnkoder.ViewModels
 {
@@ -70,24 +71,29 @@ namespace FfmpegEnkoder.ViewModels
 
             if (ofd.ShowDialog() == true)
             {
-                filePaths = ofd.FileNames;
-                EncodePathSet(Path.GetDirectoryName(ofd.FileNames[0]));
-
-                var mediaInfo = new MediaInfoWrapper(filePaths[0]);
-
-                //get video duration in seconds (with floating points)
-                VideoDurationSeconds = (float)mediaInfo.Duration / 1000;//mediaInfo.Duration 1s == 1000ms
-
-                EncodeInfo.EncodingStatus = "Files Opened:\n";
-                for (int i = 0; i < filePaths.Length; i++)
-                {
-                    EncodeInfo.EncodingStatus += $"[{i + 1}/{filePaths.Length}] {filePaths[i]}\n";
-                }
+                OpenFiles(ofd.FileNames);
             }
             else
             {
                 //EncodeInfo.IsNotEncoding = true;
                 return;
+            }
+        }
+
+        public void OpenFiles(string[] newFiles)
+        {
+            filePaths = newFiles;
+            EncodePathSet(Path.GetDirectoryName(newFiles[0]));
+
+            var mediaInfo = new MediaInfoWrapper(filePaths[0]);
+
+            //get video duration in seconds (with floating points)
+            VideoDurationSeconds = (float)mediaInfo.Duration / 1000;//mediaInfo.Duration 1s == 1000ms
+
+            EncodeInfo.EncodingStatus = "Files Opened:\n";
+            for (int i = 0; i < filePaths.Length; i++)
+            {
+                EncodeInfo.EncodingStatus += $"[{i + 1}/{filePaths.Length}] {filePaths[i]}\n";
             }
         }
 
@@ -238,7 +244,7 @@ namespace FfmpegEnkoder.ViewModels
             return 0;
         }*/
 
-        public void OnEncoderPath()
+        public void OnOpenEncoderPath()
         {
             if (Directory.Exists(EncodeInfo.EncodePath))
             {
@@ -246,12 +252,27 @@ namespace FfmpegEnkoder.ViewModels
             }
         }
 
-        public void OnFinishedPath()
+        public void OnOpenFinishedPath()
         {
             if (Directory.Exists(EncodeInfo.FinishPath))
             {
                 Process.Start("explorer.exe", string.Format("/open,\"{0}\"", Path.GetFullPath(EncodeInfo.FinishPath)));
                 //Process.Start("explorer.exe", string.Format("/select,\"{0}\"", Path.GetFullPath(EncodeInfo.FinishPath)));
+            }
+        }
+
+        public void OnMedia_Drop(object sender, DragEventArgs e)
+        {
+            if (EncodeInfo.IsNotEncoding == false) return;//encoding in progress, dont do anything
+
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                // Note that you can have more than one file.
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+
+                // Assuming you have one file that you care about, pass it off; if there are no valid files it will still open the folder but have an empty list
+                if (files.Length > 0)
+                    OpenFiles(files);
             }
         }
 

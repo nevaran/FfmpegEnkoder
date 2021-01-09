@@ -13,6 +13,8 @@
     Width="800"
     Height="480"
     d:DataContext="{d:DesignInstance local:ShellViewModel}"
+    AllowDrop="True"
+    Drop="{s:Action OnMedia_Drop}"
     FontSize="16"
     mc:Ignorable="d"
     >
@@ -50,7 +52,7 @@
                     Height="25"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
-                    Command="{s:Action OnEncoderPath}"
+                    Command="{s:Action OnOpenEncoderPath}"
                     ToolTip="Explore Path"
                     >
                     <iconPacks:PackIconUnicons Kind="FolderOpen" />
@@ -77,7 +79,7 @@
                     Height="25"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
-                    Command="{s:Action OnFinishedPath}"
+                    Command="{s:Action OnOpenFinishedPath}"
                     ToolTip="Explore Path"
                     >
                     <iconPacks:PackIconUnicons Kind="FolderOpen" />
