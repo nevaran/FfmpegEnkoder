@@ -129,5 +129,20 @@ namespace FfmpegEnkoder.Models
                 SetAndNotify(ref _finishPath, value);
             }
         }
+
+        private string _encodeArguments = "";
+
+        public string EncodeArguments
+        {
+            get
+            {
+                return _encodeArguments;
+            }
+            set
+            {
+                SetAndNotify(ref _encodeArguments, value);
+            }
+        }
+
     }
 }
