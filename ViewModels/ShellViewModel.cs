@@ -153,12 +153,28 @@ namespace FfmpegEnkoder.ViewModels
                     notWebmArg = $" -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames}";
                 }
 
+                string notMp4Arg = "";
+                if (Path.GetExtension(encodeFile).ToLower() != ".mp4")
+                {
+                    notMp4Arg = " -map 0 -c:s copy";
+                }
+
+                string notWebmArg2 = "";
+                if (Path.GetExtension(encodeFile).ToLower() != ".webm")
+                {
+                    notWebmArg2 = $"libx{EncodeParams.Encoder[EncodeParams.EncoderIndex]}";
+                }
+                else
+                {
+                    notWebmArg2 = "libvpx-vp9";
+                }
+
                 var startInfo = new ProcessStartInfo(EncodeInfo.FfmpegPath)
                 {
                     Arguments =
                     //-preset ultrafast, superfast, faster, fast, medium, slow, slower, veryslow, placebo - faster = more size, faster encoding
                     //-crf 18 - 0 = identical to input (takes a long time); higher number = lower quality
-                    $"-i \"{fullFile}\" -ss {EncodeParams.TrimStartSeconds} -hide_banner -y -threads {EncodeParams.UsedThreads} -map 0 -c:s copy -c:a aac -b:a {128}k -c:v libx{EncodeParams.Encoder[EncodeParams.EncoderIndex]} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p{notWebmArg} \"{encodeFile}\"",
+                    $"-i \"{fullFile}\" -ss {EncodeParams.TrimStartSeconds} -hide_banner -y -threads {EncodeParams.UsedThreads}{notMp4Arg} -c:v {notWebmArg2} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p{notWebmArg} \"{encodeFile}\"",
                     //$"-i \"{EncodeInfo.EncodePath}\" -hide_banner -y -threads {0} -map 0 {audioMap} {subtitleMap} -c:s copy -c:a aac -b:a {128}k {videoFilter} -c:v libx265 -preset fast -crf {18} -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} \"{outputFile.FullName}\"";
                     UseShellExecute = false,
                     CreateNoWindow = true,
@@ -172,6 +188,8 @@ namespace FfmpegEnkoder.ViewModels
                 {
                     if (e?.Data == null)
                         return;
+
+                    //EncodeInfo.EncodingStatus += $"***{e.Data}\n";//for debugging failed encoding
 
                     var chunks = e.Data.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                     var time = chunks.FirstOrDefault(c => c.StartsWith("time="));

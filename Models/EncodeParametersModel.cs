@@ -5,7 +5,7 @@ namespace FfmpegEnkoder.Models
 {
     public class EncodeParametersModel : PropertyChangedBase
     {
-        public string[] Format { get; } = new string[] { "mp4", "mkv" };
+        public string[] Format { get; } = new string[] { "mkv", "webm", "mp4" };
 
         private int _formatIndex = 0;
 
@@ -17,6 +17,8 @@ namespace FfmpegEnkoder.Models
             }
             set
             {
+                if (value == 1)
+                    CrfQuality = 30;
                 SetAndNotify(ref _formatIndex, value);
             }
         }
