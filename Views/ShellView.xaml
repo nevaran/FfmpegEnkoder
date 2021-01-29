@@ -19,6 +19,13 @@
     mc:Ignorable="d"
     >
 
+    <Window.TaskbarItemInfo>
+        <TaskbarItemInfo
+            ProgressState="{Binding ProgressState, Mode=TwoWay}"
+            ProgressValue="{Binding TotalProgress, Mode=TwoWay}"
+            />
+    </Window.TaskbarItemInfo>
+
     <Window.Resources>
         <converter:TwoThreadValuesToCheckConverter x:Key="TwoThreadValuesToCheckConverter" />
     </Window.Resources>

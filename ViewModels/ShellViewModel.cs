@@ -1,4 +1,5 @@
 ﻿using FfmpegEnkoder.Models;
+using FfmpegEnkoder.Services;
 using MediaInfo;
 using Microsoft.Win32;
 using Stylet;
@@ -11,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Windows;
+using System.Windows.Shell;
 
 namespace FfmpegEnkoder.ViewModels
 {
@@ -32,6 +34,34 @@ namespace FfmpegEnkoder.ViewModels
             }
         }
 
+        private double _totalProgress = 0;
+
+        public double TotalProgress
+        {
+            get
+            {
+                return _totalProgress;
+            }
+            set
+            {
+                SetAndNotify(ref _totalProgress, value);
+            }
+        }
+
+        private TaskbarItemProgressState _progressState = TaskbarItemProgressState.None;
+
+        public TaskbarItemProgressState ProgressState
+        {
+            get
+            {
+                return _progressState;
+            }
+            set
+            {
+                SetAndNotify(ref _progressState, value);
+            }
+        }
+
         string[] filePaths;
 
         public EncodeInformationModel EncodeInfo { get; set; } = new EncodeInformationModel();
@@ -44,6 +74,8 @@ namespace FfmpegEnkoder.ViewModels
             EncodeInfo.FfmpegPath = $"{AppDomain.CurrentDomain.BaseDirectory}\\bin\\ffmpeg.exe";
 
             EncodeInfo.PropertyChanged += EncodeInfo_PropertyChanged;
+
+            NotifyByEmail.WriteEmailDefaultInfo();
         }
 
         private void EncodeInfo_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -111,7 +143,10 @@ namespace FfmpegEnkoder.ViewModels
 
         public void ExecuteEncoder(Object stateInfo)
         {
-            EncodeInfo.EncodingStatus = string.Empty;
+            var startTime = DateTime.Now;
+
+            EncodeInfo.EncodingStatus = $"Started encoding - {startTime}\n";
+            ProgressState = TaskbarItemProgressState.Normal;
 
             for (int i = 0; i < filePaths.Length; i++)
             {
@@ -150,13 +185,13 @@ namespace FfmpegEnkoder.ViewModels
                 string notWebmArg = "";
                 if(Path.GetExtension(fullFile).ToLower() != ".webm")
                 {
-                    notWebmArg = $" -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames}";
+                    //notWebmArg = $" -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames}";
                 }
 
                 string notMp4Arg = "";
                 if (Path.GetExtension(encodeFile).ToLower() != ".mp4")
                 {
-                    notMp4Arg = " -map 0 -c:s copy";
+                    //notMp4Arg = " -map 0 -c:s copy";
                 }
 
                 string notWebmArg2 = "";
@@ -169,12 +204,18 @@ namespace FfmpegEnkoder.ViewModels
                     notWebmArg2 = "libvpx-vp9";
                 }
 
+                string forTrimStart = "";
+                if(EncodeParams.TrimStartSeconds > 0)
+                {
+                    forTrimStart = $" -ss {EncodeParams.TrimStartSeconds}";
+                }
+
                 var startInfo = new ProcessStartInfo(EncodeInfo.FfmpegPath)
                 {
                     Arguments =
                     //-preset ultrafast, superfast, faster, fast, medium, slow, slower, veryslow, placebo - faster = more size, faster encoding
                     //-crf 18 - 0 = identical to input (takes a long time); higher number = lower quality
-                    $"-i \"{fullFile}\" -ss {EncodeParams.TrimStartSeconds} -hide_banner -y -threads {EncodeParams.UsedThreads}{notMp4Arg} -c:v {notWebmArg2} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p{notWebmArg} \"{encodeFile}\"",
+                    $"-i \"{fullFile}\"{forTrimStart} -hide_banner -y -threads {EncodeParams.UsedThreads}{notMp4Arg} -c:v {notWebmArg2} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p{notWebmArg} \"{encodeFile}\"",
                     //$"-i \"{EncodeInfo.EncodePath}\" -hide_banner -y -threads {0} -map 0 {audioMap} {subtitleMap} -c:s copy -c:a aac -b:a {128}k {videoFilter} -c:v libx265 -preset fast -crf {18} -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} \"{outputFile.FullName}\"";
                     UseShellExecute = false,
                     CreateNoWindow = true,
@@ -224,6 +265,9 @@ namespace FfmpegEnkoder.ViewModels
 
                         EncodeInfo.ProgressPercentage = percentage;
                         lastPercentage = percentage;
+
+                        TotalProgress = (i / (double)filePaths.Length) + (percentage / filePaths.Length);
+                        //Debug.WriteLine(TotalProgress.ToString());
                     }
                 }
 
@@ -247,7 +291,14 @@ namespace FfmpegEnkoder.ViewModels
 
             EncodeInfo.IsNotEncoding = true;//all queued encoding is done and we can open the ability for new encoding
 
-            EncodeInfo.EncodingStatus += $"\nEncoding Done!";
+            var endTime = DateTime.Now;
+            EncodeInfo.EncodingStatus += $"\nEncoding Done! - {endTime}";
+
+            TotalProgress = 100;
+            ProgressState = TaskbarItemProgressState.None;
+
+            if ((endTime - startTime).Minutes > 5)//send email only if it took longer than 5 minutes
+                NotifyByEmail.SendNotify();
         }
 
         /*public static int FindBestAudioTrack(AudioStream[] audioStreams, bool japanesePrority = true)
