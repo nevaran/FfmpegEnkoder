@@ -16,6 +16,7 @@
     AllowDrop="True"
     Drop="{s:Action OnMedia_Drop}"
     FontSize="16"
+    Icon="/Resources/FEicon.ico"
     mc:Ignorable="d"
     >
 
