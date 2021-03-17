@@ -177,22 +177,12 @@ namespace FfmpegEnkoder.ViewModels
                 //width++;
 
                 //var scale = $"{width}x{height}";
-                var frames = Math.Ceiling(mediaInfo.BestVideoStream.Duration.TotalSeconds * mediaInfo.Framerate);
+                double frames = 0;
+                if (Path.GetExtension(fullFile).ToLower() != ".gif" && Path.GetExtension(encodeFile).ToLower() != ".gif")
+                    frames = Math.Ceiling(mediaInfo.BestVideoStream.Duration.TotalSeconds * mediaInfo.Framerate);
 
                 //var audioTrack = FindBestAudioTrack(mediaInfo.AudioStreams.ToArray(), false);
                 //var audioMap = $"-map -0:a -map 0:a:{audioTrack}";
-
-                string notWebmArg = "";
-                if(Path.GetExtension(fullFile).ToLower() != ".webm")
-                {
-                    //notWebmArg = $" -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames}";
-                }
-
-                string notMp4Arg = "";
-                if (Path.GetExtension(encodeFile).ToLower() != ".mp4")
-                {
-                    //notMp4Arg = " -map 0 -c:s copy";
-                }
 
                 string notWebmArg2 = "";
                 if (Path.GetExtension(encodeFile).ToLower() != ".webm")
@@ -212,15 +202,23 @@ namespace FfmpegEnkoder.ViewModels
 
                 var startInfo = new ProcessStartInfo(EncodeInfo.FfmpegPath)
                 {
-                    Arguments =
-                    //-preset ultrafast, superfast, faster, fast, medium, slow, slower, veryslow, placebo - faster = more size, faster encoding
-                    //-crf 18 - 0 = identical to input (takes a long time); higher number = lower quality
-                    $"-i \"{fullFile}\"{forTrimStart} -hide_banner -y -threads {EncodeParams.UsedThreads}{notMp4Arg} -c:v {notWebmArg2} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p{notWebmArg} \"{encodeFile}\"",
                     //$"-i \"{EncodeInfo.EncodePath}\" -hide_banner -y -threads {0} -map 0 {audioMap} {subtitleMap} -c:s copy -c:a aac -b:a {128}k {videoFilter} -c:v libx265 -preset fast -crf {18} -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} \"{outputFile.FullName}\"";
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     RedirectStandardError = true
                 };
+                //-preset ultrafast, superfast, faster, fast, medium, slow, slower, veryslow, placebo - faster = more size, faster encoding
+                //-crf 18 - 0 = identical to input (takes a long time); higher number = lower quality
+                if (Path.GetExtension(encodeFile).ToLower() == ".gif")
+                {
+                    startInfo.Arguments =
+                    $"-i \"{fullFile}\" -hide_banner -y -threads {EncodeParams.UsedThreads} -loop 0 \"{encodeFile}\"";
+                }
+                else
+                {
+                    startInfo.Arguments =
+                    $"-i \"{fullFile}\"{forTrimStart} -hide_banner -y -threads {EncodeParams.UsedThreads} -c:v {notWebmArg2} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p \"{encodeFile}\"";
+                }
                 EncodeInfo.EncodeArguments = startInfo.Arguments;
 
                 var lastPercentage = 0d;
