@@ -184,14 +184,14 @@ namespace FfmpegEnkoder.ViewModels
                 //var audioTrack = FindBestAudioTrack(mediaInfo.AudioStreams.ToArray(), false);
                 //var audioMap = $"-map -0:a -map 0:a:{audioTrack}";
 
-                string notWebmArg2 = "";
+                string notWebmArg = "";
                 if (Path.GetExtension(encodeFile).ToLower() != ".webm")
                 {
-                    notWebmArg2 = $"libx{EncodeParams.Encoder[EncodeParams.EncoderIndex]}";
+                    notWebmArg = $"libx{EncodeParams.Encoder[EncodeParams.EncoderIndex]}";
                 }
                 else
                 {
-                    notWebmArg2 = "libvpx-vp9";
+                    notWebmArg = "libvpx-vp9";
                 }
 
                 string forTrimStart = "";
@@ -209,16 +209,25 @@ namespace FfmpegEnkoder.ViewModels
                 };
                 //-preset ultrafast, superfast, faster, fast, medium, slow, slower, veryslow, placebo - faster = more size, faster encoding
                 //-crf 18 - 0 = identical to input (takes a long time); higher number = lower quality
-                if (Path.GetExtension(encodeFile).ToLower() == ".gif")
+                if (Path.GetExtension(fullFile).ToLower() == ".gif" && Path.GetExtension(encodeFile).ToLower() != ".gif")//TODO: actually fix gif to video convert
                 {
                     startInfo.Arguments =
-                    $"-i \"{fullFile}\" -hide_banner -y -threads {EncodeParams.UsedThreads} -loop 0 \"{encodeFile}\"";
+                    $"-i \"{fullFile}\"{forTrimStart} -hide_banner -y -threads {EncodeParams.UsedThreads} -c:v {notWebmArg} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p \"{encodeFile}\"";
                 }
                 else
                 {
-                    startInfo.Arguments =
-                    $"-i \"{fullFile}\"{forTrimStart} -hide_banner -y -threads {EncodeParams.UsedThreads} -c:v {notWebmArg2} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p \"{encodeFile}\"";
+                    if (Path.GetExtension(encodeFile).ToLower() == ".gif")
+                    {
+                        startInfo.Arguments =
+                        $"-i \"{fullFile}\" -hide_banner -y -threads {EncodeParams.UsedThreads} -loop 0 \"{encodeFile}\"";
+                    }
+                    else
+                    {
+                        startInfo.Arguments =
+                        $"-i \"{fullFile}\"{forTrimStart} -hide_banner -y -threads {EncodeParams.UsedThreads} -c:v {notWebmArg} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p \"{encodeFile}\"";
+                    }
                 }
+                
                 EncodeInfo.EncodeArguments = startInfo.Arguments;
 
                 var lastPercentage = 0d;
@@ -228,7 +237,7 @@ namespace FfmpegEnkoder.ViewModels
                     if (e?.Data == null)
                         return;
 
-                    //EncodeInfo.EncodingStatus += $"***{e.Data}\n";//for debugging failed encoding
+                    EncodeInfo.EncodingStatus += $"***{e.Data}\n";//for debugging failed encoding
 
                     var chunks = e.Data.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                     var time = chunks.FirstOrDefault(c => c.StartsWith("time="));
