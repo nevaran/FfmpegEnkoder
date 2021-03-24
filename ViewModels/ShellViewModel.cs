@@ -147,13 +147,13 @@ namespace FfmpegEnkoder.ViewModels
         {
             var startTime = DateTime.Now;
 
-            EncodeInfo.EncodingDebug = string.Empty;
-
             EncodeInfo.EncodingStatus = $"Started encoding - {startTime}\n";
             ProgressState = TaskbarItemProgressState.Normal;
 
             for (int i = 0; i < filePaths.Length; i++)
             {
+                EncodeInfo.EncodingDebug = string.Empty;
+
                 var fullFile = filePaths[i];
                 var encodeFile = Path.Combine(EncodeInfo.FinishPath, Path.ChangeExtension(Path.GetFileName(filePaths[i]), $".{EncodeParams.Format[EncodeParams.FormatIndex]}"));
 
@@ -289,7 +289,10 @@ namespace FfmpegEnkoder.ViewModels
                 var process = Process.Start(startInfo);
                 _processes.Add(process);
 
-                gifDuration = GetGifDuration(Image.FromFile(fullFile));
+                if (Path.GetExtension(fullFile).ToLower() == ".gif")
+                {
+                    gifDuration = GetGifDuration(Image.FromFile(fullFile));
+                }
 
                 process.ErrorDataReceived += ProgressReport;
                 process.BeginErrorReadLine();
