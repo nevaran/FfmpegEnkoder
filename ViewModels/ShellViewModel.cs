@@ -67,6 +67,8 @@ namespace FfmpegEnkoder.ViewModels
         public EncodeInformationModel EncodeInfo { get; set; } = new EncodeInformationModel();
         public EncodeParametersModel EncodeParams { get; set; } = new EncodeParametersModel();
 
+        TimeSpan gifDuration = TimeSpan.Zero;
+
         protected override void OnInitialActivate()
         {
             base.OnInitialActivate();
@@ -145,6 +147,8 @@ namespace FfmpegEnkoder.ViewModels
         {
             var startTime = DateTime.Now;
 
+            EncodeInfo.EncodingDebug = string.Empty;
+
             EncodeInfo.EncodingStatus = $"Started encoding - {startTime}\n";
             ProgressState = TaskbarItemProgressState.Normal;
 
@@ -209,7 +213,7 @@ namespace FfmpegEnkoder.ViewModels
                 };
                 //-preset ultrafast, superfast, faster, fast, medium, slow, slower, veryslow, placebo - faster = more size, faster encoding
                 //-crf 18 - 0 = identical to input (takes a long time); higher number = lower quality
-                if (Path.GetExtension(fullFile).ToLower() == ".gif" && Path.GetExtension(encodeFile).ToLower() != ".gif")//TODO: actually fix gif to video convert
+                if (Path.GetExtension(fullFile).ToLower() == ".gif" && Path.GetExtension(encodeFile).ToLower() != ".gif")
                 {
                     startInfo.Arguments =
                     $"-i \"{fullFile}\"{forTrimStart} -hide_banner -y -threads {EncodeParams.UsedThreads} -c:v {notWebmArg} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p \"{encodeFile}\"";
@@ -237,7 +241,7 @@ namespace FfmpegEnkoder.ViewModels
                     if (e?.Data == null)
                         return;
 
-                    EncodeInfo.EncodingStatus += $"***{e.Data}\n";//for debugging failed encoding
+                    EncodeInfo.EncodingDebug += $"{e.Data}\n";//for debug logging
 
                     var chunks = e.Data.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                     var time = chunks.FirstOrDefault(c => c.StartsWith("time="));
@@ -253,7 +257,7 @@ namespace FfmpegEnkoder.ViewModels
                                 chunk = chunks[i + 1];
                             else chunk = chunk[6..];
 
-                            speed = Double.Parse(chunk[..^1]);
+                            _ = Double.TryParse(chunk[..^1], out speed);
 
                             break;
                         }
@@ -263,7 +267,11 @@ namespace FfmpegEnkoder.ViewModels
                         return;
 
                     double encodedTime = TimeSpan.Parse(time[5..]).TotalSeconds;
-                    double totalTime = mediaInfo.BestVideoStream.Duration.TotalSeconds;
+                    double totalTime = 1;
+                    if (mediaInfo.BestVideoStream is not null)
+                        totalTime = mediaInfo.BestVideoStream.Duration.TotalSeconds;
+                    else
+                        totalTime = gifDuration.TotalSeconds;
 
                     var percentage = encodedTime / totalTime;
                     if (percentage > lastPercentage)
@@ -281,15 +289,13 @@ namespace FfmpegEnkoder.ViewModels
                 var process = Process.Start(startInfo);
                 _processes.Add(process);
 
-                if (mediaInfo.BestVideoStream is not null)
-                {
-                    process.ErrorDataReceived += ProgressReport;
-                    process.BeginErrorReadLine();
-                }
-                
+                gifDuration = GetGifDuration(Image.FromFile(fullFile));
+
+                process.ErrorDataReceived += ProgressReport;
+                process.BeginErrorReadLine();
+
                 process.WaitForExit();
-                if (mediaInfo.BestVideoStream is not null)
-                    process.ErrorDataReceived -= ProgressReport;
+                process.ErrorDataReceived -= ProgressReport;
 
                 _processes.Remove(process);
 
@@ -304,8 +310,30 @@ namespace FfmpegEnkoder.ViewModels
             TotalProgress = 100;
             ProgressState = TaskbarItemProgressState.None;
 
-            if ((endTime - startTime).Minutes > 5)//send email only if it took longer than 5 minutes
+            if ((endTime - startTime).Minutes > 20)//send email only if it took longer than set amount of minutes
                 NotifyByEmail.SendNotify();
+        }
+
+        public static TimeSpan GetGifDuration(Image image, int fps = 60)
+        {
+            var minimumFrameDelay = (1000.0 / fps);
+            if (!image.RawFormat.Equals(ImageFormat.Gif)) return TimeSpan.Zero;
+            if (!ImageAnimator.CanAnimate(image)) return TimeSpan.Zero;
+
+            var frameDimension = new FrameDimension(image.FrameDimensionsList[0]);
+
+            var frameCount = image.GetFrameCount(frameDimension);
+            var totalDuration = 0;
+
+            for (var f = 0; f < frameCount; f++)
+            {
+                var delayPropertyBytes = image.GetPropertyItem(20736).Value;
+                var frameDelay = BitConverter.ToInt32(delayPropertyBytes, f * 4) * 10;
+                // Minimum delay is 16 ms. It's 1/60 sec i.e. 60 fps
+                totalDuration += (frameDelay < minimumFrameDelay ? (int)minimumFrameDelay : frameDelay);
+            }
+
+            return TimeSpan.FromMilliseconds(totalDuration);
         }
 
         /*public static int FindBestAudioTrack(AudioStream[] audioStreams, bool japanesePrority = true)

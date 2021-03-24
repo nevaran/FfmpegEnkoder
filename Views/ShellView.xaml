@@ -219,6 +219,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
+                <RowDefinition Height="150" />
             </Grid.RowDefinitions>
 
             <TextBlock
@@ -228,6 +229,13 @@
             <ScrollViewer Grid.Row="1">
                 <TextBlock
                     Text="{Binding EncodeInfo.EncodingStatus, IsAsync=True}"
+                    TextWrapping="Wrap"
+                    />
+            </ScrollViewer>
+            <ScrollViewer Grid.Row="2" CanContentScroll="True">
+                <TextBlock
+                    FontSize="12"
+                    Text="{Binding EncodeInfo.EncodingDebug, IsAsync=True}"
                     TextWrapping="Wrap"
                     />
             </ScrollViewer>

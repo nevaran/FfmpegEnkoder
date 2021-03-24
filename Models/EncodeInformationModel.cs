@@ -53,6 +53,23 @@ namespace FfmpegEnkoder.Models
             }
         }
 
+        private string _encodingDebug = "";
+
+        /// <summary>
+        /// Debugging progress and events
+        /// </summary>
+        public string EncodingDebug
+        {
+            get
+            {
+                return _encodingDebug;
+            }
+            set
+            {
+                SetAndNotify(ref _encodingDebug, value);
+            }
+        }
+
         private double _progressPercentage = 0d;
 
         public double ProgressPercentage
