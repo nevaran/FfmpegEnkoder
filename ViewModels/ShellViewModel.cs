@@ -160,149 +160,150 @@ namespace FfmpegEnkoder.ViewModels
                 if (!File.Exists(fullFile))
                 {
                     EncodeInfo.EncodingStatus += $"[{i + 1}/{filePaths.Length}] Could not find file: {filePaths[i]}\n";
-                    return;
-                }
-
-                EncodeInfo.EncodingStatus += $"[{i + 1}/{filePaths.Length}] Encoding {fullFile}\n";
-
-                if (!Directory.Exists(EncodeInfo.FinishPath))
-                {
-                    Directory.CreateDirectory(EncodeInfo.FinishPath);
-                }
-
-                var mediaInfo = new MediaInfoWrapper(fullFile);
-
-                //var ratio = (Single)mediaInfo.Width / mediaInfo.Height;
-                //var height = Math.Min(mediaInfo.Height, EncodeInfo.EncodeResolution);
-                //var height = mediaInfo.Height;
-                //var width = mediaInfo.Width;
-                //var width = Math.Ceiling(height * ratio);
-                //if (width % 2 == 1)
-                //width++;
-
-                //var scale = $"{width}x{height}";
-                double frames = 0;
-                if (Path.GetExtension(fullFile).ToLower() != ".gif" && Path.GetExtension(encodeFile).ToLower() != ".gif")
-                    frames = Math.Ceiling(mediaInfo.BestVideoStream.Duration.TotalSeconds * mediaInfo.Framerate);
-
-                //var audioTrack = FindBestAudioTrack(mediaInfo.AudioStreams.ToArray(), false);
-                //var audioMap = $"-map -0:a -map 0:a:{audioTrack}";
-
-                string notWebmArg = "";
-                if (Path.GetExtension(encodeFile).ToLower() != ".webm")
-                {
-                    notWebmArg = $"libx{EncodeParams.Encoder[EncodeParams.EncoderIndex]}";
                 }
                 else
                 {
-                    notWebmArg = "libvpx-vp9";
-                }
+                    EncodeInfo.EncodingStatus += $"[{i + 1}/{filePaths.Length}] Encoding {fullFile}\n";
 
-                string forTrimStart = "";
-                if(EncodeParams.TrimStartSeconds > 0)
-                {
-                    forTrimStart = $" -ss {EncodeParams.TrimStartSeconds}";
-                }
-
-                var startInfo = new ProcessStartInfo(EncodeInfo.FfmpegPath)
-                {
-                    //$"-i \"{EncodeInfo.EncodePath}\" -hide_banner -y -threads {0} -map 0 {audioMap} {subtitleMap} -c:s copy -c:a aac -b:a {128}k {videoFilter} -c:v libx265 -preset fast -crf {18} -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} \"{outputFile.FullName}\"";
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardError = true
-                };
-                //-preset ultrafast, superfast, faster, fast, medium, slow, slower, veryslow, placebo - faster = more size, faster encoding
-                //-crf 18 - 0 = identical to input (takes a long time); higher number = lower quality
-                if (Path.GetExtension(fullFile).ToLower() == ".gif" && Path.GetExtension(encodeFile).ToLower() != ".gif")
-                {
-                    startInfo.Arguments =
-                    $"-i \"{fullFile}\"{forTrimStart} -hide_banner -y -threads {EncodeParams.UsedThreads} -c:v {notWebmArg} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p \"{encodeFile}\"";
-                }
-                else
-                {
-                    if (Path.GetExtension(encodeFile).ToLower() == ".gif")
+                    if (!Directory.Exists(EncodeInfo.FinishPath))
                     {
-                        startInfo.Arguments =
-                        $"-i \"{fullFile}\" -hide_banner -y -threads {EncodeParams.UsedThreads} -loop 0 \"{encodeFile}\"";
+                        Directory.CreateDirectory(EncodeInfo.FinishPath);
+                    }
+
+                    var mediaInfo = new MediaInfoWrapper(fullFile);
+
+                    //var ratio = (Single)mediaInfo.Width / mediaInfo.Height;
+                    //var height = Math.Min(mediaInfo.Height, EncodeInfo.EncodeResolution);
+                    //var height = mediaInfo.Height;
+                    //var width = mediaInfo.Width;
+                    //var width = Math.Ceiling(height * ratio);
+                    //if (width % 2 == 1)
+                    //width++;
+
+                    //var scale = $"{width}x{height}";
+                    double frames = 0;
+                    if (Path.GetExtension(fullFile).ToLower() != ".gif" && Path.GetExtension(encodeFile).ToLower() != ".gif")
+                        frames = Math.Ceiling(mediaInfo.BestVideoStream.Duration.TotalSeconds * mediaInfo.Framerate);
+
+                    //var audioTrack = FindBestAudioTrack(mediaInfo.AudioStreams.ToArray(), false);
+                    //var audioMap = $"-map -0:a -map 0:a:{audioTrack}";
+
+                    string notWebmArg = "";
+                    if (Path.GetExtension(encodeFile).ToLower() != ".webm")
+                    {
+                        notWebmArg = $"libx{EncodeParams.Encoder[EncodeParams.EncoderIndex]}";
                     }
                     else
+                    {
+                        notWebmArg = "libvpx-vp9";
+                    }
+
+                    string forTrimStart = "";
+                    if (EncodeParams.TrimStartSeconds > 0)
+                    {
+                        forTrimStart = $" -ss {EncodeParams.TrimStartSeconds}";
+                    }
+
+                    var startInfo = new ProcessStartInfo(EncodeInfo.FfmpegPath)
+                    {
+                        //$"-i \"{EncodeInfo.EncodePath}\" -hide_banner -y -threads {0} -map 0 {audioMap} {subtitleMap} -c:s copy -c:a aac -b:a {128}k {videoFilter} -c:v libx265 -preset fast -crf {18} -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} \"{outputFile.FullName}\"";
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        RedirectStandardError = true
+                    };
+                    //-preset ultrafast, superfast, faster, fast, medium, slow, slower, veryslow, placebo - faster = more size, faster encoding
+                    //-crf 18 - 0 = identical to input (takes a long time); higher number = lower quality
+                    if (Path.GetExtension(fullFile).ToLower() == ".gif" && Path.GetExtension(encodeFile).ToLower() != ".gif")
                     {
                         startInfo.Arguments =
                         $"-i \"{fullFile}\"{forTrimStart} -hide_banner -y -threads {EncodeParams.UsedThreads} -c:v {notWebmArg} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p \"{encodeFile}\"";
                     }
-                }
-                
-                EncodeInfo.EncodeArguments = startInfo.Arguments;
-
-                var lastPercentage = 0d;
-
-                void ProgressReport(Object sender, DataReceivedEventArgs e)
-                {
-                    if (e?.Data == null)
-                        return;
-
-                    EncodeInfo.EncodingDebug += $"{e.Data}\n";//for debug logging
-
-                    var chunks = e.Data.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                    var time = chunks.FirstOrDefault(c => c.StartsWith("time="));
-
-                    var speed = 0d;
-
-                    for (var i = 0; i < chunks.Length; i++)
+                    else
                     {
-                        var chunk = chunks[i];
-                        if (chunk.StartsWith("speed="))
+                        if (Path.GetExtension(encodeFile).ToLower() == ".gif")
                         {
-                            if (chunk.Length == 6)
-                                chunk = chunks[i + 1];
-                            else chunk = chunk[6..];
-
-                            _ = Double.TryParse(chunk[..^1], out speed);
-
-                            break;
+                            startInfo.Arguments =
+                            $"-i \"{fullFile}\" -hide_banner -y -threads {EncodeParams.UsedThreads} -loop 0 \"{encodeFile}\"";
+                        }
+                        else
+                        {
+                            startInfo.Arguments =
+                            $"-i \"{fullFile}\"{forTrimStart} -hide_banner -y -threads {EncodeParams.UsedThreads} -c:v {notWebmArg} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p \"{encodeFile}\"";
                         }
                     }
 
-                    if (String.IsNullOrWhiteSpace(time))
-                        return;
+                    EncodeInfo.EncodeArguments = startInfo.Arguments;
 
-                    double encodedTime = TimeSpan.Parse(time[5..]).TotalSeconds;
-                    double totalTime = 1;
-                    if (mediaInfo.BestVideoStream is not null)
-                        totalTime = mediaInfo.BestVideoStream.Duration.TotalSeconds;
-                    else
-                        totalTime = gifDuration.TotalSeconds;
+                    var lastPercentage = 0d;
 
-                    var percentage = encodedTime / totalTime;
-                    if (percentage > lastPercentage)
+                    void ProgressReport(Object sender, DataReceivedEventArgs e)
                     {
-                        EncodeInfo.EncodeSpeedString = speed;
+                        if (e?.Data == null)
+                            return;
 
-                        EncodeInfo.ProgressPercentage = percentage;
-                        lastPercentage = percentage;
+                        EncodeInfo.EncodingDebug += $"{e.Data}\n";//for debug logging
 
-                        TotalProgress = (i / (double)filePaths.Length) + (percentage / filePaths.Length);
-                        //Debug.WriteLine(TotalProgress.ToString());
+                        var chunks = e.Data.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                        var time = chunks.FirstOrDefault(c => c.StartsWith("time="));
+
+                        var speed = 0d;
+
+                        for (var i = 0; i < chunks.Length; i++)
+                        {
+                            var chunk = chunks[i];
+                            if (chunk.StartsWith("speed="))
+                            {
+                                if (chunk.Length == 6)
+                                    chunk = chunks[i + 1];
+                                else chunk = chunk[6..];
+
+                                _ = Double.TryParse(chunk[..^1], out speed);
+
+                                break;
+                            }
+                        }
+
+                        if (String.IsNullOrWhiteSpace(time))
+                            return;
+
+                        double encodedTime = TimeSpan.Parse(time[5..]).TotalSeconds;
+                        double totalTime = 1;
+                        if (mediaInfo.BestVideoStream is not null)
+                            totalTime = mediaInfo.BestVideoStream.Duration.TotalSeconds;
+                        else
+                            totalTime = gifDuration.TotalSeconds;
+
+                        var percentage = encodedTime / totalTime;
+                        if (percentage > lastPercentage)
+                        {
+                            EncodeInfo.EncodeSpeedString = speed;
+
+                            EncodeInfo.ProgressPercentage = percentage;
+                            lastPercentage = percentage;
+
+                            TotalProgress = (i / (double)filePaths.Length) + (percentage / filePaths.Length);
+                            //Debug.WriteLine(TotalProgress.ToString());
+                        }
                     }
+
+                    var process = Process.Start(startInfo);
+                    _processes.Add(process);
+
+                    if (Path.GetExtension(fullFile).ToLower() == ".gif")
+                    {
+                        gifDuration = GetGifDuration(Image.FromFile(fullFile));
+                    }
+
+                    process.ErrorDataReceived += ProgressReport;
+                    process.BeginErrorReadLine();
+
+                    process.WaitForExit();
+                    process.ErrorDataReceived -= ProgressReport;
+
+                    _processes.Remove(process);
+
+                    EncodeInfo.ProgressPercentage = 1;//to show 100% in the view
                 }
-
-                var process = Process.Start(startInfo);
-                _processes.Add(process);
-
-                if (Path.GetExtension(fullFile).ToLower() == ".gif")
-                {
-                    gifDuration = GetGifDuration(Image.FromFile(fullFile));
-                }
-
-                process.ErrorDataReceived += ProgressReport;
-                process.BeginErrorReadLine();
-
-                process.WaitForExit();
-                process.ErrorDataReceived -= ProgressReport;
-
-                _processes.Remove(process);
-
-                EncodeInfo.ProgressPercentage = 1;//to show 100% in the view
             }
 
             EncodeInfo.IsNotEncoding = true;//all queued encoding is done and we can open the ability for new encoding
