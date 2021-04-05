@@ -213,19 +213,26 @@ namespace FfmpegEnkoder.ViewModels
                     };
                     //-preset ultrafast, superfast, faster, fast, medium, slow, slower, veryslow, placebo - faster = more size, faster encoding
                     //-crf 18 - 0 = identical to input (takes a long time); higher number = lower quality
-                    if (Path.GetExtension(fullFile).ToLower() == ".gif" && Path.GetExtension(encodeFile).ToLower() != ".gif")
+
+
+                    if (Path.GetExtension(encodeFile).ToLower() == ".apng" || Path.GetExtension(encodeFile).ToLower() == ".png")//any -> apng
                     {
                         startInfo.Arguments =
-                        $"-i \"{fullFile}\"{forTrimStart} -hide_banner -y -threads {EncodeParams.UsedThreads} -c:v {notWebmArg} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p \"{encodeFile}\"";
+                        $"-i \"{fullFile}\" -hide_banner -plays 0 -y -f apng \"{encodeFile}\"";
+                    }
+                    else if (Path.GetExtension(fullFile).ToLower() == ".gif" && Path.GetExtension(encodeFile).ToLower() != ".gif")//gif -> video
+                    {
+                        startInfo.Arguments =
+                        $"-i \"{fullFile}\" -hide_banner -y -threads {EncodeParams.UsedThreads} -c:v {notWebmArg} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p \"{encodeFile}\"";
                     }
                     else
                     {
-                        if (Path.GetExtension(encodeFile).ToLower() == ".gif")
+                        if (Path.GetExtension(encodeFile).ToLower() == ".gif")//any -> gif
                         {
                             startInfo.Arguments =
-                            $"-i \"{fullFile}\" -hide_banner -y -threads {EncodeParams.UsedThreads} -loop 0 \"{encodeFile}\"";
+                            $"-i \"{fullFile}\" -hide_banner -y -threads {EncodeParams.UsedThreads} -loop 0 \"{encodeFile}\"";//TODO: better gif compression
                         }
-                        else
+                        else//video -> video
                         {
                             startInfo.Arguments =
                             $"-i \"{fullFile}\"{forTrimStart} -hide_banner -y -threads {EncodeParams.UsedThreads} -c:v {notWebmArg} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p \"{encodeFile}\"";

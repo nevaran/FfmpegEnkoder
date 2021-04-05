@@ -5,7 +5,7 @@ namespace FfmpegEnkoder.Models
 {
     public class EncodeParametersModel : PropertyChangedBase
     {
-        public string[] Format { get; } = new string[] { "mkv", "webm", "mp4", "gif" };
+        public string[] Format { get; } = new string[] { "mkv", "webm", "mp4", "gif", "png" };
 
         private int _formatIndex = 0;
 
