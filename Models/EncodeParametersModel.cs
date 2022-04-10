@@ -1,11 +1,10 @@
 ﻿using Stylet;
-using System;
 
 namespace FfmpegEnkoder.Models
 {
     public class EncodeParametersModel : PropertyChangedBase
     {
-        public string[] Format { get; } = new string[] { "mkv", "webm", "mp4", "gif", "png" };
+        public string[] Format { get; } = new string[] { "webm", "mkv", "mp4", "gif", "png" };
 
         private int _formatIndex = 0;
 
@@ -17,8 +16,9 @@ namespace FfmpegEnkoder.Models
             }
             set
             {
-                if (value == 1)
+                if (value == 0)//set the recommended webm quality
                     CrfQuality = 30;
+
                 SetAndNotify(ref _formatIndex, value);
             }
         }
@@ -89,11 +89,44 @@ namespace FfmpegEnkoder.Models
         {
             get
             {
-                return MathF.Round(_trimStartSeconds, 1);
+                if (_trimStartSeconds > _trimEndSeconds) _trimStartSeconds = _trimEndSeconds;//clamp value
+
+                return _trimStartSeconds;
+                //return MathF.Round(_trimStartSeconds, 1);
             }
             set
             {
                 SetAndNotify(ref _trimStartSeconds, value);
+            }
+        }
+
+        private float _trimEndSeconds = 0;
+
+        public float TrimEndSeconds
+        {
+            get
+            {
+                if (_trimEndSeconds < _trimStartSeconds) _trimEndSeconds = _trimStartSeconds;//clamp value
+
+                return _trimEndSeconds;
+            }
+            set
+            {
+                SetAndNotify(ref _trimEndSeconds, value);
+            }
+        }
+
+        private bool _noAudio = false;
+
+        public bool NoAudio
+        {
+            get
+            {
+                return _noAudio;
+            }
+            set
+            {
+                SetAndNotify(ref _noAudio, value);
             }
         }
     }

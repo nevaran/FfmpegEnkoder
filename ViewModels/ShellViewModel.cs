@@ -18,7 +18,7 @@ namespace FfmpegEnkoder.ViewModels
 {
     public class ShellViewModel : Screen
     {
-        private readonly List<Process> _processes = new List<Process>();
+        private readonly List<Process> _processes = new();
 
         private float _videoDurationSeconds = 0;
 
@@ -97,7 +97,7 @@ namespace FfmpegEnkoder.ViewModels
 
         public void OnOpenFiles()
         {
-            OpenFileDialog ofd = new OpenFileDialog
+            OpenFileDialog ofd = new()
             {
                 Filter = "All files (*.*)|*.*",
                 Multiselect = true
@@ -119,10 +119,13 @@ namespace FfmpegEnkoder.ViewModels
             filePaths = newFiles;
             EncodePathSet(Path.GetDirectoryName(newFiles[0]));
 
-            var mediaInfo = new MediaInfoWrapper(filePaths[0]);
+            MediaInfoWrapper mediaInfo = new(filePaths[0]);
 
             //get video duration in seconds (with floating points)
             VideoDurationSeconds = (float)mediaInfo.Duration / 1000;//mediaInfo.Duration 1s == 1000ms
+
+            EncodeParams.TrimEndSeconds = VideoDurationSeconds;
+            EncodeParams.TrimStartSeconds = 0;
 
             EncodeInfo.EncodingStatus = "Files Opened:\n";
             for (int i = 0; i < filePaths.Length; i++)
@@ -143,9 +146,9 @@ namespace FfmpegEnkoder.ViewModels
             ThreadPool.QueueUserWorkItem(ExecuteEncoder);
         }
 
-        public void ExecuteEncoder(Object stateInfo)
+        public void ExecuteEncoder(object stateInfo)
         {
-            var startTime = DateTime.Now;
+            DateTime startTime = DateTime.Now;
 
             EncodeInfo.EncodingStatus = $"Started encoding - {startTime}\n";
             ProgressState = TaskbarItemProgressState.Normal;
@@ -204,6 +207,18 @@ namespace FfmpegEnkoder.ViewModels
                         forTrimStart = $" -ss {EncodeParams.TrimStartSeconds}";
                     }
 
+                    string forTrimEnd = "";
+                    if (EncodeParams.TrimEndSeconds != VideoDurationSeconds)
+                    {
+                        forTrimEnd = $" -to {EncodeParams.TrimEndSeconds}";
+                    }
+
+                    string noAudio = "";
+                    if (EncodeParams.NoAudio)
+                    {
+                        noAudio = " -an";
+                    }
+
                     var startInfo = new ProcessStartInfo(EncodeInfo.FfmpegPath)
                     {
                         //$"-i \"{EncodeInfo.EncodePath}\" -hide_banner -y -threads {0} -map 0 {audioMap} {subtitleMap} -c:s copy -c:a aac -b:a {128}k {videoFilter} -c:v libx265 -preset fast -crf {18} -pix_fmt yuv420p -frames:{mediaInfo.BestVideoStream.StreamNumber} {frames} \"{outputFile.FullName}\"";
@@ -213,7 +228,6 @@ namespace FfmpegEnkoder.ViewModels
                     };
                     //-preset ultrafast, superfast, faster, fast, medium, slow, slower, veryslow, placebo - faster = more size, faster encoding
                     //-crf 18 - 0 = identical to input (takes a long time); higher number = lower quality
-
 
                     if (Path.GetExtension(encodeFile).ToLower() == ".apng" || Path.GetExtension(encodeFile).ToLower() == ".png")//any -> apng
                     {
@@ -235,7 +249,7 @@ namespace FfmpegEnkoder.ViewModels
                         else//video -> video
                         {
                             startInfo.Arguments =
-                            $"-i \"{fullFile}\"{forTrimStart} -hide_banner -y -threads {EncodeParams.UsedThreads} -c:v {notWebmArg} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p \"{encodeFile}\"";
+                            $"-i \"{fullFile}\"{forTrimStart}{forTrimEnd} -hide_banner -y -threads {EncodeParams.UsedThreads} -c:v {notWebmArg} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p{noAudio} \"{encodeFile}\"";
                         }
                     }
 
@@ -406,6 +420,13 @@ namespace FfmpegEnkoder.ViewModels
         {
             EncodeInfo.FinishPath = newPath;
         }
+
+        /*
+        public void OnApplicationExit()
+        {
+            Application.Current.Shutdown();
+        }
+        */
 
         protected override void OnClose()
         {

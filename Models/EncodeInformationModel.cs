@@ -1,5 +1,4 @@
-﻿
-using Stylet;
+﻿using Stylet;
 
 namespace FfmpegEnkoder.Models
 {
