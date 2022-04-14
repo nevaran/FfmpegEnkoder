@@ -159,6 +159,5 @@ namespace FfmpegEnkoder.Models
                 SetAndNotify(ref _encodeArguments, value);
             }
         }
-
     }
 }

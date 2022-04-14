@@ -16,8 +16,8 @@ namespace FfmpegEnkoder.Models
             }
             set
             {
-                if (value == 0)//set the recommended webm quality
-                    CrfQuality = 30;
+                //if (value == 0)//set the recommended webm quality
+                    //CrfQuality = 30;
 
                 SetAndNotify(ref _formatIndex, value);
             }

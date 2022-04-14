@@ -122,7 +122,7 @@ namespace FfmpegEnkoder.ViewModels
             MediaInfoWrapper mediaInfo = new(filePaths[0]);
 
             //get video duration in seconds (with floating points)
-            VideoDurationSeconds = (float)mediaInfo.Duration / 1000;//mediaInfo.Duration 1s == 1000ms
+            VideoDurationSeconds = (float)mediaInfo.Duration / 1000;//mediaInfo.Duration = ms
 
             EncodeParams.TrimEndSeconds = VideoDurationSeconds;
             EncodeParams.TrimStartSeconds = 0;
@@ -157,8 +157,8 @@ namespace FfmpegEnkoder.ViewModels
             {
                 EncodeInfo.EncodingDebug = string.Empty;
 
-                var fullFile = filePaths[i];
-                var encodeFile = Path.Combine(EncodeInfo.FinishPath, Path.ChangeExtension(Path.GetFileName(filePaths[i]), $".{EncodeParams.Format[EncodeParams.FormatIndex]}"));
+                string fullFile = filePaths[i];
+                string encodeFile = Path.Combine(EncodeInfo.FinishPath, Path.ChangeExtension(Path.GetFileName(filePaths[i]), $".{EncodeParams.Format[EncodeParams.FormatIndex]}"));
 
                 if (!File.Exists(fullFile))
                 {
@@ -173,7 +173,7 @@ namespace FfmpegEnkoder.ViewModels
                         Directory.CreateDirectory(EncodeInfo.FinishPath);
                     }
 
-                    var mediaInfo = new MediaInfoWrapper(fullFile);
+                    MediaInfoWrapper mediaInfo = new(fullFile);
 
                     //var ratio = (Single)mediaInfo.Width / mediaInfo.Height;
                     //var height = Math.Min(mediaInfo.Height, EncodeInfo.EncodeResolution);
@@ -198,7 +198,7 @@ namespace FfmpegEnkoder.ViewModels
                     }
                     else
                     {
-                        notWebmArg = "libvpx-vp9";
+                        notWebmArg = "libvpx-vp9";//use webm encoder if its set as webm
                     }
 
                     string forTrimStart = "";
@@ -244,7 +244,7 @@ namespace FfmpegEnkoder.ViewModels
                         if (Path.GetExtension(encodeFile).ToLower() == ".gif")//any -> gif
                         {
                             startInfo.Arguments =
-                            $"-i \"{fullFile}\" -hide_banner -y -threads {EncodeParams.UsedThreads} -loop 0 \"{encodeFile}\"";//TODO: better gif compression
+                            $"-i \"{fullFile}\" -hide_banner -y -threads {EncodeParams.UsedThreads} -vf \"scale = {mediaInfo.Width}:-1:flags = lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse\" -loop 0 \"{encodeFile}\"";
                         }
                         else//video -> video
                         {
