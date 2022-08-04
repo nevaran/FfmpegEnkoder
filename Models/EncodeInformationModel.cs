@@ -1,4 +1,5 @@
 ﻿using Stylet;
+using System.Collections.Generic;
 
 namespace FfmpegEnkoder.Models
 {
@@ -68,6 +69,8 @@ namespace FfmpegEnkoder.Models
                 SetAndNotify(ref _encodingDebug, value);
             }
         }
+
+        public List<string> debugLinesBuilder = new();
 
         private double _progressPercentage = 0d;
 

@@ -10,6 +10,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Windows;
 using System.Windows.Shell;
@@ -155,6 +156,7 @@ namespace FfmpegEnkoder.ViewModels
 
             for (int i = 0; i < filePaths.Length; i++)
             {
+                EncodeInfo.debugLinesBuilder.Clear();
                 EncodeInfo.EncodingDebug = string.Empty;
 
                 string fullFile = filePaths[i];
@@ -262,7 +264,10 @@ namespace FfmpegEnkoder.ViewModels
                         if (e?.Data == null)
                             return;
 
-                        EncodeInfo.EncodingDebug += $"{e.Data}\n";//for debug logging
+                        //for debug logging
+                        EncodeInfo.debugLinesBuilder.Add(e.Data);
+                        if (EncodeInfo.debugLinesBuilder.Count > 4 * (i + 1)) EncodeInfo.debugLinesBuilder.RemoveAt(0);
+                        EncodeInfo.EncodingDebug = string.Join("\n", EncodeInfo.debugLinesBuilder);
 
                         var chunks = e.Data.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                         var time = chunks.FirstOrDefault(c => c.StartsWith("time="));
@@ -278,13 +283,13 @@ namespace FfmpegEnkoder.ViewModels
                                     chunk = chunks[i + 1];
                                 else chunk = chunk[6..];
 
-                                _ = Double.TryParse(chunk[..^1], out speed);
+                                _ = double.TryParse(chunk[..^1], out speed);
 
                                 break;
                             }
                         }
 
-                        if (String.IsNullOrWhiteSpace(time))
+                        if (string.IsNullOrWhiteSpace(time))
                             return;
 
                         double encodedTime = TimeSpan.Parse(time[5..]).TotalSeconds;
