@@ -259,14 +259,15 @@ namespace FfmpegEnkoder.ViewModels
 
                     var lastPercentage = 0d;
 
-                    void ProgressReport(Object sender, DataReceivedEventArgs e)
+                    void ProgressReport(object sender, DataReceivedEventArgs e)
                     {
                         if (e?.Data == null)
                             return;
 
                         //for debug logging
                         EncodeInfo.debugLinesBuilder.Add(e.Data);
-                        if (EncodeInfo.debugLinesBuilder.Count > 4 * (i + 1)) EncodeInfo.debugLinesBuilder.RemoveAt(0);
+                        if (EncodeInfo.debugLinesBuilder.Count > 20 * (i + 1))
+                            EncodeInfo.debugLinesBuilder.RemoveAt(EncodeInfo.debugLinesBuilder.Count-1);
                         EncodeInfo.EncodingDebug = string.Join("\n", EncodeInfo.debugLinesBuilder);
 
                         var chunks = e.Data.Split(' ', StringSplitOptions.RemoveEmptyEntries);
