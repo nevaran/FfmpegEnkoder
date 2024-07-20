@@ -73,7 +73,7 @@
                         Command="{s:Action OnOpenEncoderPath}"
                         ToolTip="Explore Path"
                         >
-                        <iconPacks:PackIconUnicons Kind="FolderOpen" />
+                        <iconPacks:PackIconUnicons Kind="FolderOpenLine" />
                     </Button>
                 </Grid>
 
@@ -99,7 +99,7 @@
                         Command="{s:Action OnOpenFinishedPath}"
                         ToolTip="Explore Path"
                         >
-                        <iconPacks:PackIconUnicons Kind="FolderOpen" />
+                        <iconPacks:PackIconUnicons Kind="FolderOpenLine" />
                     </Button>
                 </Grid>
 

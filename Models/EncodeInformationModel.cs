@@ -70,7 +70,7 @@ namespace FfmpegEnkoder.Models
             }
         }
 
-        public List<string> debugLinesBuilder = new();
+        public List<string> debugLinesBuilder = [];
 
         private double _progressPercentage = 0d;
 

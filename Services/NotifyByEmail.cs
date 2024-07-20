@@ -43,6 +43,11 @@ namespace FfmpegEnkoder.Services
             }
         }
 
+        static readonly JsonSerializerOptions jsonSerializerOptions = new()
+        {
+            WriteIndented = false,
+        };
+
         /// <summary>
         /// Create a json template used for email information
         /// </summary>
@@ -54,10 +59,7 @@ namespace FfmpegEnkoder.Services
             {
                 var eHost = new EmailInfo();
 
-                var options = new JsonSerializerOptions
-                {
-                    WriteIndented = false,
-                };
+                var options = jsonSerializerOptions;
                 string jsonString = JsonSerializer.Serialize(eHost, options);
                 File.WriteAllText(settingsPath, jsonString);
             }

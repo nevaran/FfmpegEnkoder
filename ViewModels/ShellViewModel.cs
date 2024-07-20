@@ -19,7 +19,7 @@ namespace FfmpegEnkoder.ViewModels
 {
     public class ShellViewModel : Screen
     {
-        private readonly List<Process> _processes = new();
+        private readonly List<Process> _processes = [];
 
         private float _videoDurationSeconds = 0;
 
@@ -63,7 +63,7 @@ namespace FfmpegEnkoder.ViewModels
             }
         }
 
-        string[] filePaths;
+        private string[] filePaths;
 
         public EncodeInformationModel EncodeInfo { get; set; } = new EncodeInformationModel();
         public EncodeParametersModel EncodeParams { get; set; } = new EncodeParametersModel();
@@ -187,14 +187,15 @@ namespace FfmpegEnkoder.ViewModels
 
                     //var scale = $"{width}x{height}";
                     double frames = 0;
-                    if (Path.GetExtension(fullFile).ToLower() != ".gif" && Path.GetExtension(encodeFile).ToLower() != ".gif")
+                    if (!Path.GetExtension(fullFile).Equals(".gif", StringComparison.CurrentCultureIgnoreCase) 
+                        && !Path.GetExtension(encodeFile).Equals(".gif", StringComparison.CurrentCultureIgnoreCase))
                         frames = Math.Ceiling(mediaInfo.BestVideoStream.Duration.TotalSeconds * mediaInfo.Framerate);
 
                     //var audioTrack = FindBestAudioTrack(mediaInfo.AudioStreams.ToArray(), false);
                     //var audioMap = $"-map -0:a -map 0:a:{audioTrack}";
 
                     string notWebmArg = "";
-                    if (Path.GetExtension(encodeFile).ToLower() != ".webm")
+                    if (!Path.GetExtension(encodeFile).Equals(".webm", StringComparison.CurrentCultureIgnoreCase))
                     {
                         notWebmArg = $"libx{EncodeParams.Encoder[EncodeParams.EncoderIndex]}";
                     }
@@ -231,19 +232,21 @@ namespace FfmpegEnkoder.ViewModels
                     //-preset ultrafast, superfast, faster, fast, medium, slow, slower, veryslow, placebo - faster = more size, faster encoding
                     //-crf 18 - 0 = identical to input (takes a long time); higher number = lower quality
 
-                    if (Path.GetExtension(encodeFile).ToLower() == ".apng" || Path.GetExtension(encodeFile).ToLower() == ".png")//any -> apng
+                    if (Path.GetExtension(encodeFile).Equals(".apng", StringComparison.CurrentCultureIgnoreCase) 
+                        || Path.GetExtension(encodeFile).Equals(".png", StringComparison.CurrentCultureIgnoreCase))//any -> apng
                     {
                         startInfo.Arguments =
                         $"-i \"{fullFile}\" -hide_banner -plays 0 -y -f apng \"{encodeFile}\"";
                     }
-                    else if (Path.GetExtension(fullFile).ToLower() == ".gif" && Path.GetExtension(encodeFile).ToLower() != ".gif")//gif -> video
+                    else if (Path.GetExtension(fullFile).Equals(".gif", StringComparison.CurrentCultureIgnoreCase) 
+                        && !Path.GetExtension(encodeFile).Equals(".gif", StringComparison.CurrentCultureIgnoreCase))//gif -> video
                     {
                         startInfo.Arguments =
                         $"-i \"{fullFile}\" -hide_banner -y -threads {EncodeParams.UsedThreads} -c:v {notWebmArg} -preset {EncodeParams.EncodePreset[EncodeParams.EncodePresetIndex]} -crf {EncodeParams.CrfQuality} -pix_fmt yuv420p \"{encodeFile}\"";
                     }
                     else
                     {
-                        if (Path.GetExtension(encodeFile).ToLower() == ".gif")//any -> gif
+                        if (Path.GetExtension(encodeFile).Equals(".gif", StringComparison.CurrentCultureIgnoreCase))//any -> gif
                         {
                             startInfo.Arguments =
                             $"-i \"{fullFile}\" -hide_banner -y -threads {EncodeParams.UsedThreads} -vf \"scale = {mediaInfo.Width}:-1:flags = lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse\" -loop 0 \"{encodeFile}\"";
@@ -290,7 +293,7 @@ namespace FfmpegEnkoder.ViewModels
                             }
                         }
 
-                        if (string.IsNullOrWhiteSpace(time))
+                        if (string.IsNullOrWhiteSpace(time) || time.Equals("time=N/A"))
                             return;
 
                         double encodedTime = TimeSpan.Parse(time[5..]).TotalSeconds;
@@ -316,7 +319,7 @@ namespace FfmpegEnkoder.ViewModels
                     var process = Process.Start(startInfo);
                     _processes.Add(process);
 
-                    if (Path.GetExtension(fullFile).ToLower() == ".gif")
+                    if (Path.GetExtension(fullFile).Equals(".gif", StringComparison.CurrentCultureIgnoreCase))
                     {
                         gifDuration = GetGifDuration(Image.FromFile(fullFile));
                     }

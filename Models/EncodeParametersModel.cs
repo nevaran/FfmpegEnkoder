@@ -4,7 +4,7 @@ namespace FfmpegEnkoder.Models
 {
     public class EncodeParametersModel : PropertyChangedBase
     {
-        public string[] Format { get; } = new string[] { "webm", "mkv", "mp4", "gif", "png" };
+        public string[] Format { get; } = ["webm", "mkv", "mp4", "gif", "png"];
 
         private int _formatIndex = 0;
 
@@ -23,7 +23,7 @@ namespace FfmpegEnkoder.Models
             }
         }
 
-        public string[] Encoder { get; } = new string[] { "265", "264" };
+        public string[] Encoder { get; } = ["265", "264"];
 
         private int _encodeIndex = 0;
 
@@ -39,7 +39,7 @@ namespace FfmpegEnkoder.Models
             }
         }
 
-        public string[] EncodePreset { get; } = new string[] { "ultrafast", "superfast", "faster", "fast", "medium", "slow", "slower", "veryslow", "placebo" };
+        public string[] EncodePreset { get; } = ["ultrafast", "superfast", "faster", "fast", "medium", "slow", "slower", "veryslow", "placebo"];
 
         private int _encodePresetIndex = 4;
 
